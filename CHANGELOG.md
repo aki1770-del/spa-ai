@@ -2,7 +2,55 @@
 
 All notable changes to SPA AI will be documented here.
 
-## [Unreleased] — Phase 0 identity lock
+## [Unreleased] — Phase 1 MVP skeleton
+
+### Added (2026-04-25)
+- `pyproject.toml` — Python 3.11+ project; zero runtime deps in v0.1
+  (deterministic looms only; Anthropic SDK lands when first
+  LLM-driven loom does, per principles.md V65 Sekishō-idai).
+- `src/spa_ai/` — package skeleton: `config`, `scanner`, `registry`,
+  `cli`, `looms/{base,pre_commit_formatter}`.
+- `src/spa_ai/looms/base.py` — `Loom` Protocol + `LoomFinding`,
+  `LoomPatch` dataclasses; explicit contract that detect() and
+  propose_patch() must not write to disk.
+- `src/spa_ai/looms/pre_commit_formatter.py` — first loom; detects
+  missing `.pre-commit-config.yaml` (or `.yml`); proposes a
+  five-hook default config + Jidoka-rationale PR body. Cites Sakichi
+  vision 20 (stopping must be cheap).
+- `src/spa_ai/registry.py` — `LoomRegistry` enforces unique loom_id
+  + valid sakichi_vision_id (1..100, per commitments.md
+  Commitment 5).
+- `src/spa_ai/scanner.py` — walks repo; raises clearly on
+  non-existent or non-git paths.
+- `src/spa_ai/cli.py` — `spa-ai scan` + `spa-ai propose` (dry-run by
+  default; `--apply` writes; refuses to overwrite existing files).
+  No `alert` or `submit` subcommands per Promise 3 + Commitment 1.
+- `tests/` — pytest suite covering loom detect/propose, scanner,
+  registry, and CLI end-to-end including dry-run/apply paths.
+- `README.md` — install + run sections.
+
+### Phase 1 step coverage (per launch_plan.md)
+- Step 11: monorepo layout (CLI-only per Komada 2026-04-25 directive).
+- Step 12: Python 3.11+ chosen.
+- Step 14: `SPAConfig` class (minimal v0.1 surface).
+- Step 15: `PreCommitFormatterLoom` shipped (first loom).
+- Step 17: `RepoScanner` shipped.
+- Step 18: `LoomRegistry` shipped.
+- Step 19: `--dry-run` semantics (default; `--apply` to write).
+- Step 20: `spa-ai scan <repo>` shipped.
+- Step 21: `spa-ai propose <repo> --loom <id>` shipped.
+- Step 22: PR-body template with "Why this halt" + "What you do" +
+  rollback + provenance sections.
+
+### Phase 1 deferred to next slice
+- Step 13: Anthropic SDK vendoring (no LLM-driven loom yet, so no dep).
+- Step 16: `ContributingMdLoom` (second loom; D-VGC158-4 evidence).
+- Step 23: Dockerfile.
+- Step 24: telemetry surface.
+- Step 25: end-to-end test against a real upstream clone (gated on
+  ContributingMdLoom shipping).
+
+## [Unreleased — superseded] Phase 0 identity lock
 
 ### Added (2026-04-23)
 - Initial repository + README
