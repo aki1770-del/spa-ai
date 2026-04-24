@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "SPA AI — install Jidoka halts as PRs. A broken thread must stop the loom."
 requires-python = ">=3.11"
 authors = [{ name = "Komada" }]
-license = { text = "TBD — see CHANGELOG" }
+license = { text = "MIT" }
 readme = "README.md"
 keywords = ["jidoka", "sakichi", "loom", "developer-tools", "automation"]
 
