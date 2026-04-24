@@ -42,6 +42,13 @@ All notable changes to SPA AI will be documented here.
 - Step 22: PR-body template with "Why this halt" + "What you do" +
   rollback + provenance sections.
 
+### Decisions ratified (2026-04-25)
+- **License: MIT** (Komada decision). LICENSE file added at repo root;
+  `pyproject.toml` `license` field updated. Apache 2.0 was the
+  alternative; MIT chosen for permissive simplicity.
+- **PyPI name reservation**: deferred — not now. Revisit at Phase 5
+  publish time.
+
 ### Phase 1 deferred to next slice
 - Step 13: Anthropic SDK vendoring (no LLM-driven loom yet, so no dep).
 - Step 16: `ContributingMdLoom` (second loom; D-VGC158-4 evidence).
