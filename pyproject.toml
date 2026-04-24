@@ -1,0 +1,43 @@
+[project]
+name = "spa-ai"
+version = "0.1.0"
+description = "SPA AI — install Jidoka halts as PRs. A broken thread must stop the loom."
+requires-python = ">=3.11"
+authors = [{ name = "Komada" }]
+license = { text = "TBD — see CHANGELOG" }
+readme = "README.md"
+keywords = ["jidoka", "sakichi", "loom", "developer-tools", "automation"]
+
+# v0.1 dependencies are deliberately minimal. The first two looms
+# (PreCommitFormatterLoom, ContributingMdLoom) are deterministic
+# detectors — no LLM required. Anthropic SDK lands when the first
+# LLM-driven loom does, per principles.md V65 Sekishō-idai (do not
+# pre-install dependencies for futures we have not yet earned).
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+spa-ai = "spa_ai.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spa_ai"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
