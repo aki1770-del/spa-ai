@@ -22,7 +22,9 @@ SPA AI is the loom-builder.
 
 ## What SPA AI does
 
-SPA AI scans a repository. It identifies missing halts — structural gaps where a human is absorbing what a machine should catch. For each gap, SPA AI generates a pull request that installs the halt: a pre-commit hook, a CI step, a type-stub file, a contract test, a CODEOWNERS cross-review routing. The halt lives with the repo. The human reviews the PR, merges it, and moves on. Next time the thread breaks, the loom catches it — not the reviewer.
+SPA AI scans a repository. It identifies missing halts — structural gaps where a human is absorbing what a machine should catch. For each gap, SPA AI generates a pull request that installs the halt as a machine-level catch (pre-commit hooks, CI checks, contract tests, and similar mechanisms). The halt lives with the repo. The human reviews the PR, merges it, and moves on. Next time the thread breaks, the loom catches it — not the reviewer.
+
+*v0.1 ships with two loom classes (`PreCommitFormatterLoom`, `ContributingMdLoom`); the registry grows as we earn each new class through dogfood evidence.*
 
 ## What SPA AI refuses to become
 
