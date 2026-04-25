@@ -96,3 +96,9 @@ def test_three_slot_vision_attribution() -> None:
     assert 77 in loom.method_vision_ids
     # V22 (loom-serves-weaver) — every loom must hold this stance.
     assert 22 in loom.stance_vision_ids
+    # V25 (autonomation = liberation not replacement) — the anti-replacement
+    # declaration. Per cross-reference 5-Whys 2026-04-25: belongs in every
+    # loom's stance slot. The clippy-in-CI / rustfmt-at-commit split is V25
+    # in concrete: the loom liberates the maintainer from formatting-drift
+    # vigilance without replacing their judgment on lint policy.
+    assert 25 in loom.stance_vision_ids
