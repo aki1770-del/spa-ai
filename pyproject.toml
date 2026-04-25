@@ -1,6 +1,6 @@
 [project]
 name = "spa-ai"
-version = "0.1.0"
+version = "0.2.0"
 description = "SPA AI — install Jidoka halts as PRs. A broken thread must stop the loom."
 requires-python = ">=3.11"
 authors = [{ name = "Komada" }]

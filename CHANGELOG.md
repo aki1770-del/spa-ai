@@ -2,7 +2,116 @@
 
 All notable changes to SPA AI will be documented here.
 
-## [Unreleased] — Phase 1 MVP skeleton
+## [Unreleased]
+
+(empty — next release will accumulate here)
+
+---
+
+## [0.2.0] — 2026-04-26
+
+First versioned release. Phase 1 MVP skeleton + Phase 0.5 doctrinal patches +
+3-slot vision attribution schema.
+
+### Added (2026-04-25 to 2026-04-26)
+
+#### Loom Protocol — 3-slot vision attribution schema (PR [#6](https://github.com/aki1770-del/spa-ai/pull/6))
+
+- `src/spa_ai/looms/base.py` — `Loom` Protocol extended with two new
+  vision-attribution slots:
+  - `method_vision_ids: list[int]` — METHOD visions (HOW the loom does
+    its work)
+  - `stance_vision_ids: list[int]` — STANCE visions (HOW THE WEAVER
+    IS TREATED by the loom)
+- Both production looms annotated:
+  - `sakichi_vision_id = 20` (cheap-stop — failure-mode anchor; existing)
+  - `method_vision_ids = [77, 18, 99]` (V77 genchi-genbutsu walks the
+    repo; V18 5-Whys-mechanism in PR body; V99 write-the-decision-down
+    via the patch itself)
+  - `stance_vision_ids = [22, 25, 32, 100]` (V22 loom-serves-weaver +
+    V25 autonomation = liberation not replacement + V32 katei-teki
+    tone + V100 equal-dignity)
+- Tests (`tests/test_pre_commit_formatter.py`,
+  `tests/test_pre_commit_formatter_rust.py`):
+  `test_three_slot_vision_attribution` regression guard on each loom.
+- Rationale: per the 2026-04-25 cross-reference 5-Whys, singular
+  vision attribution was a category error — the 100 visions form a
+  graph, not a tag cloud.
+
+#### V25 stance slot addition (PR [#7](https://github.com/aki1770-del/spa-ai/pull/7))
+
+- Both production looms now declare `stance_vision_ids = [22, 25, 32, 100]`
+  (V25 added — autonomation = human liberation, not replacement).
+- Anchored on the cross-reference synthesis GAPS section: V25 was
+  the anti-replacement declaration distinguishing SPA AI from any
+  AI-replaces-the-maintainer tool.
+
+#### README V1+V22 headline pair (PR [#8](https://github.com/aki1770-del/spa-ai/pull/8))
+
+- `README.md` headline rewritten to the synthesis-recommended public
+  pair: *"A broken thread must stop the loom (V1). The loom serves
+  the weaver, not the reverse (V22)."*
+- V92 framing as corollary: *"When a failure happens, the question
+  is never who missed it but which loom was absent."*
+
+#### `pre-commit-formatter-rust` loom — `--check` flag fix (PR [#5](https://github.com/aki1770-del/spa-ai/pull/5))
+
+- `src/spa_ai/looms/pre_commit_formatter_rust.py` — rustfmt hook
+  now emits `cargo fmt -- --check` (was `cargo fmt --` in 0.1.0,
+  which silently rewrote files instead of halting on drift).
+- `tests/test_pre_commit_formatter_rust.py` —
+  `test_rustfmt_hook_uses_check_flag` regression guard.
+- Caught by external_pr_audit swarm during embedded-hal dogfood
+  audit on 2026-04-25; loom that should have caught: the audit
+  itself now exists.
+
+#### Doctrinal docs — Phase 0.5 patches (PR [#1](https://github.com/aki1770-del/spa-ai/pull/1))
+
+- `docs/commitments.md` — Commitment 7 (Andon pulls are public)
+  refined per V12 weaver-dignity language.
+- `docs/mission.md` — replaces tagline with explicit weaver-framing
+  (maintainer / rural developer / contributor; all the same person
+  in Our model).
+- `docs/manifesto.md` — machine-level halt wording + v0.1 ships
+  with two loom classes mention.
+- `docs/launch_plan.md` — Step 11 reframed as CLI-only v0.1
+  (Komada directive 2026-04-25); GitHub App / hosted-service surface
+  deferred per V65 sekishō-idai.
+- `docs/principles.md` — new file; V65 Sekishō-idai principle anchor.
+- `docs/demo_script.md` — fallback-target rule (per dogfood evolution).
+- `docs/promises.md` — refined per Phase 0.5 audit.
+
+#### `looms_in_production.md` (PR [#4](https://github.com/aki1770-del/spa-ai/pull/4))
+
+- `docs/looms_in_production.md` — new file; concrete narrative of
+  the loom-installation pattern operating outside SPA AI itself.
+  Documents Loom #1 (MRA-1, Maintainer Reception Audit Gate),
+  Loom #2 (SISE-1, Schema Input-Space Enumeration Gate), and
+  Loom #3-candidate (Verify-First Gate, held for VGC-164 docket).
+
+### Behavior change vs 0.1.0
+
+The Rust loom now correctly halts on formatting drift instead of
+silently rewriting files. This is a behavior fix, not a breaking
+API change. Users of `PreCommitFormatterRustLoom` should regenerate
+their `.pre-commit-config.yaml` (re-run `spa-ai propose
+<repo-path> --loom pre-commit-formatter-rust --apply` to get the
+correct hook entry).
+
+### Tests
+
+- 38 tests passing (was 28 in 0.1.0; +10 from 3-slot schema tests +
+  V25 stance tests + rustfmt --check regression guard + others).
+- Non-CLI test suite passes cleanly via
+  `PYTHONPATH=src python3 -m pytest tests/test_pre_commit_formatter*.py
+  tests/test_registry.py tests/test_scanner.py`.
+- CLI tests require editable install (`pip install -e .[dev]`); pre-existing
+  PEP 668 environment issue blocks `pip install` on some Linux
+  distributions but does not affect runtime correctness.
+
+---
+
+## [0.1.0] — 2026-04-25 (Phase 1 MVP skeleton — initial slice)
 
 ### Added (2026-04-25)
 - `pyproject.toml` — Python 3.11+ project; zero runtime deps in v0.1
