@@ -2,7 +2,11 @@
 
 **Sakichi Principle Actuator AI** — a GitHub-native developer agent that installs Jidoka halts for failure classes developers currently absorb through vigilance.
 
-> A broken thread must stop the loom. The loom serves the weaver. Never blame the human — build the loom that should have caught it.
+> *"A broken thread must stop the loom."* — Sakichi Vision 1
+>
+> *"The loom serves the weaver, not the reverse."* — Sakichi Vision 22
+
+When a failure happens, the question is never *who missed it* but **which loom was absent** (Vision 92).
 
 **Status**: Phase 1 — MVP skeleton (CLI; one loom: `pre-commit-formatter`). Launch target: Phase 5 completion.
 
