@@ -79,3 +79,8 @@ def test_three_slot_vision_attribution() -> None:
     assert 77 in loom.method_vision_ids
     # V22 (loom-serves-weaver) — every loom must hold this stance.
     assert 22 in loom.stance_vision_ids
+    # V25 (autonomation = liberation not replacement) — the anti-replacement
+    # declaration that distinguishes a Sakichi loom from a nag-bot or an
+    # AI-replaces-the-maintainer tool. Per cross-reference 5-Whys 2026-04-25:
+    # belongs in every loom's stance slot.
+    assert 25 in loom.stance_vision_ids
