@@ -55,3 +55,27 @@ def test_propose_patch_does_not_write_to_disk(synthetic_repo: Path) -> None:
     finding = loom.detect(synthetic_repo)[0]
     _ = loom.propose_patch(finding)
     assert not (synthetic_repo / ".pre-commit-config.yaml").exists()
+
+
+def test_three_slot_vision_attribution() -> None:
+    """Per base.py contract: every loom declares 3 vision-attribution slots.
+
+    sakichi_vision_id (FAILURE-MODE) + method_vision_ids (HOW the loom
+    works) + stance_vision_ids (HOW the weaver is treated). The 100
+    visions form a graph, not a tag cloud — singular attribution is a
+    category error (cross-reference 5-Whys finding 2026-04-25).
+    """
+    loom = PreCommitFormatterLoom()
+
+    assert loom.sakichi_vision_id == 20
+    assert isinstance(loom.method_vision_ids, list)
+    assert isinstance(loom.stance_vision_ids, list)
+    assert len(loom.method_vision_ids) >= 1
+    assert len(loom.stance_vision_ids) >= 1
+    assert all(1 <= v <= 100 for v in loom.method_vision_ids)
+    assert all(1 <= v <= 100 for v in loom.stance_vision_ids)
+
+    # V77 (genchi genbutsu) — this loom walks the actual repo to detect.
+    assert 77 in loom.method_vision_ids
+    # V22 (loom-serves-weaver) — every loom must hold this stance.
+    assert 22 in loom.stance_vision_ids

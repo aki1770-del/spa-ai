@@ -72,3 +72,27 @@ def test_propose_patch_does_not_write_to_disk(rust_repo: Path) -> None:
     finding = loom.detect(rust_repo)[0]
     _ = loom.propose_patch(finding)
     assert not (rust_repo / ".pre-commit-config.yaml").exists()
+
+
+def test_three_slot_vision_attribution() -> None:
+    """Per base.py contract: 3 vision-attribution slots required.
+
+    sakichi_vision_id (FAILURE-MODE) + method_vision_ids (HOW the loom
+    works) + stance_vision_ids (HOW the weaver is treated). Cross-
+    reference 5-Whys finding 2026-04-25: singular attribution is a
+    category error — the 100 visions form a graph.
+    """
+    loom = PreCommitFormatterRustLoom()
+
+    assert loom.sakichi_vision_id == 20
+    assert isinstance(loom.method_vision_ids, list)
+    assert isinstance(loom.stance_vision_ids, list)
+    assert len(loom.method_vision_ids) >= 1
+    assert len(loom.stance_vision_ids) >= 1
+    assert all(1 <= v <= 100 for v in loom.method_vision_ids)
+    assert all(1 <= v <= 100 for v in loom.stance_vision_ids)
+
+    # V77 (genchi genbutsu) — Rust loom walks the actual repo for Cargo.toml.
+    assert 77 in loom.method_vision_ids
+    # V22 (loom-serves-weaver) — every loom must hold this stance.
+    assert 22 in loom.stance_vision_ids

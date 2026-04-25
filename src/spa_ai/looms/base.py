@@ -3,10 +3,24 @@
 A Loom is a single Jidoka halt SPA AI knows how to detect and install.
 
 Every loom must:
-1. Declare its `loom_id` (slug) and `sakichi_vision_id` (1..100, per
-   `docs/sakichi_100_visions.md`). The vision id is required by
-   commitments.md Commitment 5 — features without lineage do not pass
-   review.
+1. Declare three vision-attribution slots (per the 2026-04-25
+   cross-reference 5-Whys finding that singular attribution is a
+   category error — the 100 visions form a graph, not a tag cloud):
+
+   - `sakichi_vision_id` (int, 1..100) — the FAILURE-MODE vision this
+     loom prevents. The single anchor of "what halt is this?". Required.
+   - `method_vision_ids` (list[int]) — METHOD visions describing HOW the
+     loom does its work (e.g., V77 genchi genbutsu for any loom that
+     walks the actual repo; V11 Andon for any loom installing a
+     contributor-side cord; V18 5-Whys for any loom whose PR body
+     terminates at mechanism). Defaults to [] for backwards compat.
+   - `stance_vision_ids` (list[int]) — STANCE/TONE visions describing
+     HOW THE WEAVER IS TREATED by the loom (e.g., V22 loom-serves-
+     weaver, V32 katei-teki tone, V100 equal dignity). Defaults to [].
+
+   All three slots ground in `docs/sakichi_100_visions.md` and are
+   required by commitments.md Commitment 5 for full lineage traceability.
+
 2. Implement `detect()` — walk the repo, return a list of LoomFinding.
 3. Implement `propose_patch()` — given a finding, return a LoomPatch
    (file contents + PR body).
@@ -69,6 +83,8 @@ class Loom(Protocol):
 
     loom_id: str
     sakichi_vision_id: int
+    method_vision_ids: list[int]
+    stance_vision_ids: list[int]
 
     def detect(self, repo_root: Path) -> list[LoomFinding]:
         """Walk `repo_root` and return findings. Must not write to disk."""

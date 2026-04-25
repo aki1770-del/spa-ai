@@ -138,6 +138,8 @@ class PreCommitFormatterRustLoom:
 
     loom_id = "pre-commit-formatter-rust"
     sakichi_vision_id = 20
+    method_vision_ids = [77, 18, 99]
+    stance_vision_ids = [22, 32, 100]
 
     def detect(self, repo_root: Path) -> list[LoomFinding]:
         if not (repo_root / "Cargo.toml").exists():
