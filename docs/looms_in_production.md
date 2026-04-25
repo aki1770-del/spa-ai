@@ -27,7 +27,12 @@ The PR was opened anyway because the local pre-submit gate (PSG-1, OPS-RULE-021)
 
 **The installed loom**: a pre-PR-open swarm that pulls the target's `PULL_REQUEST_TEMPLATE.md` + `CONTRIBUTING.md` and validates the planned body against every numbered field and stated norm. Deviations require an explicit human override. Implementation lives outside SPA AI; the rule's text is at OPS-RULE-034.
 
-**First post-ratification application**: this very page is being written alongside the dogfood PR for SPA AI itself (an upstream PR adding `.pre-commit-config.yaml` to a Rust repo via `PreCommitFormatterRustLoom`). Per OPS-RULE-034, that PR runs the swarm pre-open. The audit either passes or surfaces issues to address before any maintainer sees the PR.
+**First post-ratification application**: alongside this page, an embedded-hal dogfood was prepared (a `.pre-commit-config.yaml` proposed via `PreCommitFormatterRustLoom`). Per OPS-RULE-034, the proposed PR ran the audit swarm pre-open. The audit caught two real issues — both before any maintainer was asked to review:
+
+- **A defect in SPA AI's own loom**: the rustfmt hook shipped with `entry: cargo fmt --` (no `--check`), which silently rewrites Rust files and exits 0 — a no-op as a halt. Fix landed same day at [`aki1770-del/spa-ai#5`](https://github.com/aki1770-del/spa-ai/pull/5), with a regression test that asserts the `--check` flag and rejects the false "staged .rs files" claim from the PR body template. The "absent loom inside SPA AI" — a test that verifies loom-generated configs actually halt — got installed for this defect class.
+- **A cold-PR risk**: the swarm flagged that an unsolicited tooling PR to a governance-sensitive repo (`rust-embedded/embedded-hal`) carried close-without-merge risk per the swarm's analysis of the repo's recent closed PRs (#734, #662 — same pattern). Honored by opening an issue first ([`rust-embedded/embedded-hal#736`](https://github.com/rust-embedded/embedded-hal/issues/736)) and waiting for maintainer signal before any PR. This is the rust-embedded-specific application of the bow-before-entering spirit (the cousin of OPS-RULE-022 ack-gate).
+
+Both outcomes are exactly what MRA-1 was conceived to surface, and both happened structurally before any maintainer absorbed the cost. The dogfood PR itself remains in flight pending the issue reply — but the loom *learned two things this morning*, which is what looms are for.
 
 ---
 
