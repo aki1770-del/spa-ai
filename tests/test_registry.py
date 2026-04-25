@@ -28,6 +28,18 @@ def test_default_registry_has_pre_commit_formatter() -> None:
     assert "pre-commit-formatter" in reg
 
 
+def test_default_registry_has_pre_commit_formatter_rust() -> None:
+    reg = default_registry()
+    assert "pre-commit-formatter-rust" in reg
+
+
+def test_default_registry_size_is_two() -> None:
+    """v0.1 ships with exactly two looms; this guard prevents silent
+    additions without an accompanying test + CHANGELOG entry."""
+    reg = default_registry()
+    assert len(reg) == 2
+
+
 def test_register_rejects_duplicate_id() -> None:
     reg = LoomRegistry()
     reg.register(_FakeLoom("foo", 1))
