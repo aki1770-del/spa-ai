@@ -49,12 +49,13 @@ class LoomRegistry:
 def default_registry() -> LoomRegistry:
     """Build the v0.1 default registry.
 
-    v0.1 ships with one loom (PreCommitFormatterLoom). Per principles.md
-    V65 Sekishō-idai, the registry grows one stone at a time — each new
-    loom earns its place through one merged dogfood PR.
+    Per principles.md V65 Sekishō-idai, the registry grows one stone at
+    a time — each new loom earns its place by passing tests + review.
     """
     from .looms.pre_commit_formatter import PreCommitFormatterLoom
+    from .looms.pre_commit_formatter_rust import PreCommitFormatterRustLoom
 
     reg = LoomRegistry()
     reg.register(PreCommitFormatterLoom())
+    reg.register(PreCommitFormatterRustLoom())
     return reg

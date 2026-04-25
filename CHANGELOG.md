@@ -51,11 +51,57 @@ All notable changes to SPA AI will be documented here.
 
 ### Phase 1 deferred to next slice
 - Step 13: Anthropic SDK vendoring (no LLM-driven loom yet, so no dep).
-- Step 16: `ContributingMdLoom` (second loom; D-VGC158-4 evidence).
+- Step 16: `ContributingMdLoom` (D-VGC158-4 evidence).
 - Step 23: Dockerfile.
 - Step 24: telemetry surface.
 - Step 25: end-to-end test against a real upstream clone (gated on
   ContributingMdLoom shipping).
+
+### Phase 1 slice 2 — Rust language specialization (2026-04-25)
+
+Per the Python-vs-Rust SWOT pass (Komada decision 2026-04-25): Rust
+first. Three reasons stacked: (1) verified detection rate in our
+portfolio (embassy-rs / embedded-hal / smoltcp lack pre-commit
+configs; Python equivalents often already have them); (2) doctrinal
+continuity to D3 driver-safety chain via embedded Rust; (3) higher
+maintainer-pushback risk in Rust = better proving ground at small
+scale (V20 cheap-stop).
+
+- `src/spa_ai/looms/pre_commit_formatter_rust.py` — second loom.
+  Detects `Cargo.toml` at root + missing `.pre-commit-config.{yaml,yml}`.
+  Proposes the language-agnostic five-hook baseline plus a local
+  `rustfmt` hook (uses `cargo fmt --`; respects project
+  `rustfmt.toml`). Cites V20.
+- **clippy intentionally omitted** from the pre-commit config —
+  recompiles, violates V20 ("stopping must be cheap, or operators
+  will hesitate"). PR body explains this and recommends clippy
+  belongs in CI; provides a reasonable CI snippet.
+- Loom architecture: separate class (`PreCommitFormatterRustLoom`)
+  rather than internal language detection inside the base loom.
+  V65 single-responsibility per loom — the registry now has two
+  entries; the human picks `--loom <id>` at propose time.
+- `tests/conftest.py` — new `rust_repo` fixture (synthetic Rust
+  crate: `Cargo.toml` + `src/lib.rs` + git init).
+- `tests/test_pre_commit_formatter_rust.py` — 7 tests covering
+  detect/propose semantics + Rust-specific assertions (rustfmt
+  present, clippy explicitly absent + explained in PR body,
+  baseline hooks inherited).
+- `tests/test_scanner.py` — added `test_scanner_in_rust_repo_returns_both_pre_commit_findings`
+  to confirm both pre-commit looms fire on a Rust repo (CLI human
+  picks which to install).
+- `tests/test_registry.py` — added `test_default_registry_size_is_two`
+  guard so future loom additions force a CHANGELOG entry.
+
+Step 16 (`ContributingMdLoom`) intentionally still deferred — V65
+says one stone at a time, and the language-specialization stone
+needed to land first to validate the registry-grows-naturally
+pattern before broadening.
+
+### Phase 1 step coverage update
+- Step 15 (PreCommitFormatterLoom): shipped in slice 1.
+- Step 15-bis (PreCommitFormatterRustLoom): shipped in slice 2.
+- Steps 11, 12, 14, 17, 18, 19, 20, 21, 22: shipped in slice 1.
+- All 35 tests pass; `ruff check` clean.
 
 ## [Unreleased — superseded] Phase 0 identity lock
 
