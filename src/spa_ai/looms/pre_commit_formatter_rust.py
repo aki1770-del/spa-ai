@@ -27,7 +27,10 @@ _RUST_CONFIG = """\
 #
 # Why this halt: pre-commit catches formatting drift at source, so
 # maintainers do not absorb it during PR review. The rustfmt hook
-# below is fast (sub-second) and runs only on staged Rust files.
+# below runs `cargo fmt -- --check` on the workspace; it halts the
+# commit if any Rust file needs formatting and does NOT mutate files.
+# The `types: [rust]` filter means commits not touching any `.rs` file
+# skip the hook entirely (no toolchain cost on docs-only commits).
 #
 # clippy is deliberately NOT in this pre-commit config — clippy
 # recompiles and would violate Sakichi vision 20 ("stopping must be
@@ -48,8 +51,8 @@ repos:
   - repo: local
     hooks:
       - id: rustfmt
-        name: rustfmt
-        entry: cargo fmt --
+        name: rustfmt (cargo fmt -- --check)
+        entry: cargo fmt -- --check
         language: system
         types: [rust]
         pass_filenames: false
@@ -62,8 +65,10 @@ A `.pre-commit-config.yaml` at the repo root tuned for Rust projects:
 
 - Five language-agnostic hooks: `trailing-whitespace`, `end-of-file-fixer`,
   `check-yaml`, `check-merge-conflict`, `check-added-large-files`.
-- One Rust-specific hook: `rustfmt` as a local hook (uses the project's
-  own `cargo fmt --`; respects your `rustfmt.toml` if one exists).
+- One Rust-specific hook: `rustfmt` as a local hook running
+  `cargo fmt -- --check`. The `--check` flag means the hook halts on
+  formatting drift; it does NOT mutate your files. Respects your
+  `rustfmt.toml` if one exists.
 
 ## Why this halt
 
@@ -93,8 +98,10 @@ step:
 
 Vision 20 from the SPA AI doctrinal source: *Stopping must be cheap,
 or operators will hesitate; design the halt to cost less than the
-defect.* `rustfmt` runs only on staged `.rs` files and completes in
-milliseconds; `clippy` would not. This config places each check at
+defect.* `cargo fmt -- --check` is sub-second on most workspaces and
+is skipped entirely by pre-commit's `types: [rust]` filter when no
+`.rs` files are staged in the commit. `clippy` would recompile and
+take many seconds — wrong station. This config places each check at
 the station where it costs least.
 
 ## What you do as the maintainer

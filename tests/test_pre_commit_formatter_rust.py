@@ -102,3 +102,35 @@ def test_three_slot_vision_attribution() -> None:
     # in concrete: the loom liberates the maintainer from formatting-drift
     # vigilance without replacing their judgment on lint policy.
     assert 25 in loom.stance_vision_ids
+
+
+def test_rustfmt_hook_uses_check_flag(rust_repo: Path) -> None:
+    """The rustfmt hook must use --check, not the mutating form.
+
+    Regression guard: an earlier version of this loom shipped
+    `entry: cargo fmt --` (no --check), which silently REWRITES files
+    and exits 0 on success. That makes the hook a no-op as a halt —
+    the opposite of what the loom is meant to do. This test was added
+    after the embedded-hal dogfood audit (2026-04-25) caught the
+    defect via the external_pr_audit swarm (F-5).
+
+    Per Sakichi vision 20: a halt that does not actually halt is a
+    burden wearing the costume of a machine.
+    """
+    loom = PreCommitFormatterRustLoom()
+    finding = loom.detect(rust_repo)[0]
+    patch = loom.propose_patch(finding)
+    assert "cargo fmt -- --check" in patch.contents, (
+        "rustfmt hook must invoke 'cargo fmt -- --check' so the hook halts "
+        "on formatting drift instead of silently mutating files."
+    )
+    # And the body must NOT make false claims about the hook's behaviour.
+    body_lower = patch.pr_body.lower()
+    assert "staged `.rs` files" not in patch.pr_body, (
+        "PR body must not claim the hook 'runs only on staged .rs files' — "
+        "with `pass_filenames: false` and `cargo fmt`, the hook checks the "
+        "whole workspace."
+    )
+    assert "does not mutate" in body_lower or "do not mutate" in body_lower or "does not modify" in body_lower or "halt" in body_lower, (
+        "PR body must explain that --check halts rather than mutating files."
+    )
