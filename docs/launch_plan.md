@@ -119,7 +119,7 @@ Organized into 6 phases. Each step is concrete, verifiable, and sized to < 1 day
 
 ### Phase 1 — MVP skeleton (steps 11–25)
 
-11. Create monorepo `spa-ai/` with `/core` (loom detection), `/looms` (loom templates), `/cli` (developer entry), `/server` (GitHub app), `/docs`.
+11. Create monorepo `spa-ai/` with `/core` (loom detection), `/looms` (loom templates), `/cli` (developer entry), `/docs`. **CLI-only for v0.1** (Komada directive 2026-04-25). GitHub App / hosted-service surface (`/server`) is deferred — re-enter the launch plan only after CLI usage demonstrates a load that the local-process model cannot serve. Per `docs/principles.md` Principle 1 (V65 *Sekishō-idai*): we do not pre-build the surface a future deployment might need; we accumulate one stone at a time.
 12. Choose language: Python 3.11+ for core (matches Claude SDK ergonomics; matches our sky/bento stack).
 13. Vendor `anthropic` SDK; choose Claude Sonnet 4.6 as default model (our CT scout precedent); Opus 4.7 for synthesis.
 14. Implement `SPAConfig` class: holds API keys, rate-limit budgets, loom-library path, governance-hash lock (per OPS-RULE-024 PSG-A shape).

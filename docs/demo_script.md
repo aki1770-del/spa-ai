@@ -6,7 +6,9 @@
 
 ## Setup
 
-A terminal. Green text on black. A real open-source repo cloned locally — recommend `eclipse-kuksa/kuksa-common` (small, real, pre-commit gap known).
+A terminal. Green text on black. A real open-source repo cloned locally — primary target `eclipse-kuksa/kuksa-common` (small, real, pre-commit gap known at recording time).
+
+**Fallback target rule**: if the primary repo's pre-commit gap closes before recording (likely if SPA AI files PR #1 from the dogfood list — that's the point), pivot to the next repo in the dogfood roster whose `.pre-commit-config.yaml` is still absent. Verify the gap with `spa-ai scan <path>` immediately before each recording session — the demo claim must match the live repo state on the day. If no dogfood repo has the gap any more, that is itself the launch story; record a different demo (e.g. `ContributingMdLoom` against a still-missing target).
 
 ## Script (read aloud, 60 seconds max)
 

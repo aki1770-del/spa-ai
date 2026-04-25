@@ -53,7 +53,7 @@ The parent project's D-VGC146-F workload pattern cap applies to the SPA AI dev t
 
 ## Commitment 7 — Andon pulls are public
 
-Any user, contributor, or maintainer can pull the Andon (halt SPA AI's action on their repo) via a single `spa-ai pause-on-repo <repo>` command. The pause is effective immediately, public in our logs, and only the repo owner lifts it. No justification required from the puller.
+Any weaver — contributor, reviewer, maintainer, or downstream developer affected by a SPA-AI-installed halt — can pull the Andon (halt SPA AI's action on their repo) via a single `spa-ai pause-on-repo <repo>` command. The pause is effective immediately, public in our logs, and only the repo owner lifts it. No justification required from the puller. *Pulling the cord is a duty and a dignity, not a transgression* (Vision 12).
 
 **Enforcement**: CLI subcommand `pause-on-repo`; no mechanism to override a pause without the originating maintainer's explicit unpause.
 

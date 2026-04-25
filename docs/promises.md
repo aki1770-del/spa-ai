@@ -8,7 +8,7 @@ These are the five promises SPA AI is built under. If any is violated, the syste
 
 ## Promise 1 — We never blame the human.
 
-When SPA AI encounters a failure — a broken CI run, a merged regression, a maintainer rejection, a user-reported bug — the question is always *which loom was absent*, never *who was careless*. Five Whys terminates at a missing mechanism, never at a person. If our post-mortem reaches "the reviewer should have noticed," the post-mortem is unfinished.
+When SPA AI encounters a failure — a broken CI run, a merged regression, a maintainer rejection, a user-reported bug — the question is always *which loom was absent*, never *who was careless*. **Five Whys is the investigative half of Jidoka** (Visions 18, 80): the stop is only half the discipline; the other half is asking *why* until the answer is structural. The chain terminates at a missing mechanism, never at a person. If our post-mortem reaches "the reviewer should have noticed," the post-mortem is unfinished — keep asking why.
 
 ## Promise 2 — Every halt cites its Jidoka rationale.
 
@@ -17,6 +17,8 @@ Every pull request SPA AI generates includes a *"Why this halt"* section that ex
 ## Promise 3 — The loom is a pull request, not an alert.
 
 SPA AI does not send alerts. SPA AI does not file issues. SPA AI does not ping maintainers with "your repo is missing X." SPA AI generates the **fix** — as a ready-to-merge PR, with the loom wired in, with tests, with a rollback patch. The maintainer reviews and merges; they do not receive another thing to do. If we cannot offer a PR, we do not speak.
+
+**Single carve-out** — *gentle inquiry* (per OPS-RULE-022 inherited from the parent project): if a SPA AI PR sits without any maintainer signal for 14+ days, SPA AI may *propose* a human-authored gentle-inquiry draft in an internal output file. The human, not SPA AI, decides whether to post and writes the final wording. The artifact that reaches the maintainer is the human's. SPA AI does not initiate maintainer contact — it can only draft, never post.
 
 ## Promise 4 — The weaver owns the halt.
 
@@ -34,6 +36,7 @@ When a halt turns out to be wrong — false positive rate too high, maintainer c
 - Promise 2 is enforced by the PR-template validator: no PR opens without a *"Why this halt"* section.
 - Promise 3 is enforced by the SPA AI CLI: there is no `spa-ai alert` or `spa-ai issue-open` subcommand. Only `propose` and `submit`.
 - Promise 4 is enforced by the maintainer-respect scorecard: if our propose-to-merge ratio on a repo drops below 20%, auto-pause for that repo and retrospect.
-- Promise 5 is enforced by the rollback-PR requirement: every halt PR ships alongside its reversion patch. We are always one command from undo.
+- Promise 5 is enforced by the rollback-PR requirement: every halt PR ships alongside its reversion patch. We are always one command from undo. *Stopping must be cheap, or operators will hesitate (Vision 20)* — the rollback patch is the cheap-stop.
+- **Loom retirement preserves Sakichi lineage** (resolves the Promise 5 / Commitment 5 tension): when a loom is retired, the registry preserves (a) the loom-id, (b) the original Sakichi vision citation, (c) the evidence that triggered retirement, (d) the rollback PR. The vision itself is not retired; only this specific application of it. *A detector not installed cannot detect, but a removed detector that wasn't recorded cannot be re-installed either (Vision 99).*
 
 If any of these five is violated, any actor (human, AI agent, governance gate) may pull the Andon and halt the pipeline. Only the human anchor (the project owner) lifts a halt.
