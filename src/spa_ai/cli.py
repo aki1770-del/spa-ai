@@ -23,6 +23,7 @@ from pathlib import Path
 
 from .registry import default_registry
 from .scanner import RepoScanner
+from .telemetry import write_report
 
 
 def _cmd_scan(args: argparse.Namespace) -> int:
@@ -31,6 +32,13 @@ def _cmd_scan(args: argparse.Namespace) -> int:
 
     repo = Path(args.path).resolve()
     findings = scanner.scan(repo)
+
+    if args.report_anonymous_usage:
+        # Opt-in only. No network call — appends one JSON line locally
+        # to ~/.spa-ai/usage_reports.jsonl (or $SPA_AI_USAGE_REPORT_PATH).
+        # The user can inspect / delete the file at any time.
+        report_path = write_report(repo, findings)
+        print(f"[telemetry] Wrote anonymized usage report to {report_path}")
 
     if not findings:
         print("No missing looms detected.")
@@ -118,6 +126,18 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     scan_p = sub.add_parser("scan", help="Scan a repo for missing looms.")
     scan_p.add_argument("path", help="Path to a git working tree.")
+    scan_p.add_argument(
+        "--report-anonymous-usage",
+        action="store_true",
+        help=(
+            "Opt-in: append an anonymized scan summary to "
+            "~/.spa-ai/usage_reports.jsonl (or $SPA_AI_USAGE_REPORT_PATH). "
+            "No network call in v0.4 — local-only. The file contains: "
+            "timestamp, sha256(git origin URL or path), spa-ai version, "
+            "and per-loom (id, vision, severity, target_path) summary. "
+            "No file contents, no maintainer names, no commit hashes."
+        ),
+    )
     scan_p.set_defaults(func=_cmd_scan)
 
     prop_p = sub.add_parser(

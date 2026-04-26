@@ -4,7 +4,40 @@ All notable changes to SPA AI will be documented here.
 
 ## [Unreleased]
 
-(empty — next release will accumulate here)
+### Added
+
+#### Opt-in telemetry harness — W2-4 (this PR)
+
+- `src/spa_ai/telemetry.py` — new module. `build_report(repo_root, findings)`
+  is a pure function returning the report dict (schema_version, timestamp,
+  spa_ai_version, repo_hash, findings list). `write_report(...)` appends one
+  JSON line to `~/.spa-ai/usage_reports.jsonl` (or
+  `$SPA_AI_USAGE_REPORT_PATH` if set).
+- `src/spa_ai/cli.py` — `spa-ai scan` accepts `--report-anonymous-usage`
+  (default OFF). When passed, the harness appends one JSONL record and
+  prints `[telemetry] Wrote anonymized usage report to <path>`. Without
+  the flag, no file is touched.
+- **No network call in v0.4.** The file is local-only; the user can
+  inspect / delete it at any time. A future slice will add an explicit
+  `spa-ai telemetry submit` subcommand for users who choose to upload.
+- Repo identifier: sha256 of `git remote get-url origin` if present,
+  else sha256 of the resolved repo path. Same repo hashes consistently
+  across scans on the same host without disclosing the path.
+- Captured per finding: `loom_id`, `sakichi_vision_id`, `severity`,
+  `target_path` (repo-relative). Not captured: file contents, maintainer
+  names, commit hashes, host filesystem paths, environment variables.
+- Tests: `tests/test_telemetry.py` — 10 tests covering the report shape,
+  hash consistency, env-var override, parent-dir creation, and the CLI's
+  off-by-default + on-with-flag behavior.
+
+#### Telemetry harness 3-slot vision
+
+- `sakichi=99` (write-the-decision-down — usage data IS the decision
+  record of which looms fired where, in what shape)
+- `method=[77, 99]` (genchi-genbutsu walks the actual repo + write-down)
+- `stance=[22, 25, 100]` (loom-serves-weaver via opt-in / autonomation =
+  liberation not surveillance / equal-dignity — same opt-in standard
+  for our own usage capture as we'd ask of any tool)
 
 ---
 
