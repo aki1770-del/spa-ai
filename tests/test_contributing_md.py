@@ -40,7 +40,7 @@ def test_detect_returns_empty_when_docs_contributing_present(synthetic_repo: Pat
 def test_propose_patch_includes_jidoka_rationale(synthetic_repo: Path) -> None:
     loom = ContributingMdLoom()
     finding = loom.detect(synthetic_repo)[0]
-    patch = loom.propose_patch(finding)
+    patch = loom.propose_patch(finding, synthetic_repo)
 
     # Promise 2: every halt cites its Jidoka rationale.
     assert "Why this halt" in patch.pr_body
@@ -61,7 +61,7 @@ def test_propose_patch_does_not_write_to_disk(synthetic_repo: Path) -> None:
     """
     loom = ContributingMdLoom()
     finding = loom.detect(synthetic_repo)[0]
-    _ = loom.propose_patch(finding)
+    _ = loom.propose_patch(finding, synthetic_repo)
     assert not (synthetic_repo / "CONTRIBUTING.md").exists()
 
 

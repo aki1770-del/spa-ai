@@ -119,7 +119,7 @@ def test_propose_patch_writes_audit_artifact(synthetic_repo: Path) -> None:
     )
     loom = SilentFailureGrepperLoom()
     finding = loom.detect(synthetic_repo)[0]
-    patch = loom.propose_patch(finding)
+    patch = loom.propose_patch(finding, synthetic_repo)
 
     # Audit file structure
     assert "SilentFailureGrepperLoom audit" in patch.contents
@@ -141,7 +141,7 @@ def test_propose_patch_does_not_write_to_disk(synthetic_repo: Path) -> None:
     )
     loom = SilentFailureGrepperLoom()
     finding = loom.detect(synthetic_repo)[0]
-    _ = loom.propose_patch(finding)
+    _ = loom.propose_patch(finding, synthetic_repo)
     assert not (synthetic_repo / ".spa-ai-silent-failures.md").exists()
 
 
