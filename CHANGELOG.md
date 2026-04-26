@@ -6,7 +6,45 @@ All notable changes to SPA AI will be documented here.
 
 ### Added
 
-#### Opt-in telemetry harness — W2-4 (this PR)
+#### `spa-ai doctor` + `--format=json` — W3 (this PR)
+
+- **`spa-ai doctor <repo>`** — new subcommand. One-command introspection for
+  the maintainer about her own repo. Reports each loom's status as
+  `would_fire` / `clean` / `not_applicable`, with sample finding + ordered
+  next-step suggestions for the would-fire set.
+  - V77 primitive (the weaver goes to her own place — the repo — and
+    observes what would change before any patch is proposed).
+  - Distinguishes "already clean" (loom ran, nothing to do) from
+    "not applicable" (loom can't apply here, e.g., Rust loom on a
+    non-Rust repo) so the maintainer's mental model isn't muddled.
+- **`--format=json`** — added to both `scan` and `doctor`. Structured output
+  per `schema_version: 1` for CI integrators / IDE plugins / external tools.
+  - Schema fields: `schema_version`, `command`, `spa_ai_version`, `repo`,
+    `findings` (scan) or `looms` + `summary` (doctor).
+- **Telemetry parity**: `--report-anonymous-usage` works on `doctor` too
+  (same JSONL append shape as `scan`).
+- New module: `src/spa_ai/cli.py` — `_cmd_doctor`, `_build_doctor_report`,
+  `_classify_loom_status`, `_print_doctor_human`, plus shared `_add_format_arg`
+  / `_add_telemetry_arg` helpers.
+- Tests: `tests/test_doctor.py` — 14 tests covering human output, JSON
+  output schema, summary counts, classification edge cases (silent-failure
+  clean-with-Python vs not-applicable-without-Python; eof-newline
+  clean-with-hook vs not-applicable-without-config).
+
+#### `spa-ai doctor` + `--format=json` 3-slot vision
+
+- `sakichi=77` (genchi-genbutsu — the maintainer goes to her own repo
+  and observes; doctor surfaces what's there without imposing)
+- `method=[77, 99]` (read repo state directly / write-it-down: structured
+  output enables external tools)
+- `stance=[22, 25, 96, 100]` (loom-serves-weaver — doctor serves her
+  introspection, not our scan-counts / autonomation = liberation, not
+  surveillance / V96 maintainers-as-edge-developers — doctor treats her
+  as the decider / equal-dignity)
+
+---
+
+#### Opt-in telemetry harness — W2-4 (prior PR #16)
 
 - `src/spa_ai/telemetry.py` — new module. `build_report(repo_root, findings)`
   is a pure function returning the report dict (schema_version, timestamp,
