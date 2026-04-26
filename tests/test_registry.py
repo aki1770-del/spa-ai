@@ -33,17 +33,23 @@ def test_default_registry_has_pre_commit_formatter_rust() -> None:
     assert "pre-commit-formatter-rust" in reg
 
 
-def test_default_registry_size_is_three() -> None:
-    """v0.2.x+ ships with three looms (pre-commit-formatter,
-    pre-commit-formatter-rust, contributing-md). Guard prevents silent
-    additions without an accompanying test + CHANGELOG entry."""
+def test_default_registry_size_is_four() -> None:
+    """v0.3.x+ ships with four looms (pre-commit-formatter,
+    pre-commit-formatter-rust, contributing-md, silent-failure-grepper).
+    Guard prevents silent additions without an accompanying test +
+    CHANGELOG entry."""
     reg = default_registry()
-    assert len(reg) == 3
+    assert len(reg) == 4
 
 
 def test_default_registry_has_contributing_md() -> None:
     reg = default_registry()
     assert "contributing-md" in reg
+
+
+def test_default_registry_has_silent_failure_grepper() -> None:
+    reg = default_registry()
+    assert "silent-failure-grepper" in reg
 
 
 def test_register_rejects_duplicate_id() -> None:

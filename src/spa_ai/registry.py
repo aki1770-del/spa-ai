@@ -55,9 +55,11 @@ def default_registry() -> LoomRegistry:
     from .looms.contributing_md import ContributingMdLoom
     from .looms.pre_commit_formatter import PreCommitFormatterLoom
     from .looms.pre_commit_formatter_rust import PreCommitFormatterRustLoom
+    from .looms.silent_failure_grepper import SilentFailureGrepperLoom
 
     reg = LoomRegistry()
     reg.register(PreCommitFormatterLoom())
     reg.register(PreCommitFormatterRustLoom())
     reg.register(ContributingMdLoom())
+    reg.register(SilentFailureGrepperLoom())
     return reg
