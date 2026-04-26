@@ -8,6 +8,112 @@ All notable changes to SPA AI will be documented here.
 
 ---
 
+## [0.3.0] — 2026-04-26
+
+Loom Protocol extension + three new looms. Registry size grows 2 → 5.
+The Sakichi 100 visions are no longer covered only by V20 (cheap-stop) and
+V25 (autonomation) — V14 (silent-failure-anti-Jidoka), V15 (poka-yoke),
+and V96 (maintainers-are-edge-developers) now have dedicated looms.
+
+### Added
+
+#### Loom Protocol — `propose_patch` extended with `repo_root` (PR [#13](https://github.com/aki1770-del/spa-ai/pull/13))
+
+- `src/spa_ai/looms/base.py` — `Loom.propose_patch` signature is now
+  `propose_patch(self, finding: LoomFinding, repo_root: Path) -> LoomPatch`.
+  The new `repo_root` is the absolute path to the repository the loom
+  scanned in `detect()`. Looms that **modify** an existing file (read,
+  merge, emit) need this to read at patch-compose time. Looms that
+  always **create** a new file can ignore `repo_root`.
+- Reading from `repo_root` is permitted; writing remains forbidden —
+  disk writes are restricted to the CLI `--apply` path per
+  `promises.md` Promise 4.
+- All four pre-existing looms updated to accept the new signature
+  (their bodies unchanged — they ignore `repo_root`). The first user
+  of the new parameter is `EofNewlineLoom` (below).
+- `src/spa_ai/cli.py` — passes `repo` through to `propose_patch`.
+- This is a minor, source-compatible change for anyone using the
+  shipped looms; it would be a breaking change for any external loom
+  authors implementing the Protocol — but no external loom authors
+  exist yet, so the cost of the extension is borne entirely by the
+  internal codebase.
+
+#### EofNewlineLoom — V15 poka-yoke (PR [#13](https://github.com/aki1770-del/spa-ai/pull/13))
+
+- `src/spa_ai/looms/eof_newline.py` — new loom. Detects the case
+  where the maintainer **has** a `.pre-commit-config.yaml` (or `.yml`)
+  but did not include the `end-of-file-fixer` hook. Reads the existing
+  config from disk, appends the hook block, returns merged contents.
+- Distinct from `PreCommitFormatterLoom` — that loom handles "no
+  pre-commit-config at all"; this loom handles "config exists but
+  lacks one specific hook."
+- 3-slot vision attribution: `sakichi=15`, `method=[77, 18, 99]`,
+  `stance=[22, 25, 32, 100]`.
+- First user of the extended Loom Protocol — proves the new
+  `propose_patch(finding, repo_root)` signature on a real read-merge
+  flow.
+
+#### SilentFailureGrepperLoom — V14 silent-failure-anti-Jidoka (PR [#12](https://github.com/aki1770-del/spa-ai/pull/12))
+
+- `src/spa_ai/looms/silent_failure_grepper.py` — AST-based scanner
+  for silent-failure shapes in Python. Patterns detected:
+  `except: return None/[]/False/""/0`, `except: pass`,
+  `except: pass; return value`. The patch IS the audit artifact
+  (`.spa-ai-silent-failures.md`) — not an automated rewrite of
+  caller code, because catching-then-swallowing is a deliberate
+  weaver decision that a tool should surface, not erase.
+- Skips `venv/.venv/build/dist/__pycache__` + dot-dirs except `.github`.
+- 3-slot vision attribution: `sakichi=14`, `method=[77, 18, 99]`,
+  `stance=[22, 25, 32, 100]`.
+
+#### ContributingMdLoom — V96 maintainers-are-edge-developers (PR [#11](https://github.com/aki1770-del/spa-ai/pull/11))
+
+- `src/spa_ai/looms/contributing_md.py` — detects missing
+  `CONTRIBUTING.md` at root, `.github/`, or `docs/`. Proposes a
+  minimal template adapted from `promises.md` (5-promise pattern).
+- 3-slot vision attribution: `sakichi=96`, `method=[77, 18, 99]`,
+  `stance=[22, 25, 32, 96, 100]` (V96 in BOTH slots — the failure
+  mode AND the stance toward the maintainer are both V96-anchored).
+- Built per Komada-voice override of the why-first synthesis verdict
+  (option (c)); override record at
+  `outputs/governance_transformation/komada_override_why_first_w2_3_2026_04_26.md`.
+
+### Registry
+
+- `default_registry()` size: 4 → 5. New shipping list:
+  1. `PreCommitFormatterLoom` (V20)
+  2. `PreCommitFormatterRustLoom` (V20)
+  3. `ContributingMdLoom` (V96)
+  4. `SilentFailureGrepperLoom` (V14)
+  5. `EofNewlineLoom` (V15)
+
+### Tests
+
+- 58 tests passing (was 38 in 0.2.0; +20 from the three new looms +
+  Protocol-extension regression guards + scanner gap-coverage updates).
+- `tests/test_eof_newline.py` — 8 tests including the no-disk-write
+  contract regression and the merge-preserves-existing-hooks check.
+- `tests/test_silent_failure_grepper.py` — covers all four silent-
+  failure shapes + the venv-skip behavior.
+- `tests/test_contributing_md.py` — covers all three search paths +
+  the case-insensitivity check.
+
+### Behavior change vs 0.2.0
+
+- `RepoScanner.scan()` will now return more findings on most repos
+  because three new detectors run. This is the intended growth of
+  the Sakichi loom catalog (V65 Sekishō-idai — one stone at a time).
+- The CLI `propose --loom <id>` UX is unchanged. Each loom is opt-in
+  per id; `scan` reports all gaps, the human picks which to install.
+
+### Deferred to next slice
+
+- W2-4: opt-in telemetry harness (`spa-ai scan --report-anonymous-usage`).
+- W2-7: external_pr_audit re-run on each new loom's first dogfood PR.
+- Sub-agent fleet (VAA's 4 sensors) — depends on Path B Step 3 bylaws.
+
+---
+
 ## [0.2.0] — 2026-04-26
 
 First versioned release. Phase 1 MVP skeleton + Phase 0.5 doctrinal patches +

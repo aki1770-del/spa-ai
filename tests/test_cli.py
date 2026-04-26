@@ -24,7 +24,19 @@ def test_scan_synthetic_repo_lists_pre_commit_finding(synthetic_repo: Path) -> N
 
 
 def test_scan_clean_repo_reports_no_findings(synthetic_repo: Path) -> None:
-    (synthetic_repo / ".pre-commit-config.yaml").write_text("repos: []\n")
+    # Plug all gaps the v0.3 default registry detects on synthetic_repo:
+    # pre-commit-formatter (config missing), eof-newline (config has no
+    # end-of-file-fixer), contributing-md (no CONTRIBUTING.md).
+    # silent-failure-grepper / pre-commit-formatter-rust don't fire on
+    # this fixture (no .py with silent-failure shapes; no Cargo.toml).
+    (synthetic_repo / ".pre-commit-config.yaml").write_text(
+        "repos:\n"
+        "  - repo: https://github.com/pre-commit/pre-commit-hooks\n"
+        "    rev: v4.6.0\n"
+        "    hooks:\n"
+        "      - id: end-of-file-fixer\n"
+    )
+    (synthetic_repo / "CONTRIBUTING.md").write_text("# Contributing\n")
     result = _run_cli("scan", str(synthetic_repo))
     assert result.returncode == 0
     assert "No missing looms" in result.stdout
