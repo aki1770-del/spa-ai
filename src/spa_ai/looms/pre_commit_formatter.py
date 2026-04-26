@@ -114,8 +114,10 @@ class PreCommitFormatterLoom:
             )
         ]
 
-    def propose_patch(self, finding: LoomFinding) -> LoomPatch:
-        """Return a patch with default config + Jidoka-rationale PR body."""
+    def propose_patch(self, finding: LoomFinding, repo_root: Path) -> LoomPatch:
+        """Return a patch with default config + Jidoka-rationale PR body.
+
+        `repo_root` unused — this loom always creates a new file."""
         return LoomPatch(
             loom_id=self.loom_id,
             target_path=finding.target_path,

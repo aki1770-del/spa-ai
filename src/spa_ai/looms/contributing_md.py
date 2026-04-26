@@ -197,8 +197,10 @@ class ContributingMdLoom:
             )
         ]
 
-    def propose_patch(self, finding: LoomFinding) -> LoomPatch:
-        """Return a patch with the default CONTRIBUTING.md + V96-anchored PR body."""
+    def propose_patch(self, finding: LoomFinding, repo_root: Path) -> LoomPatch:
+        """Return a patch with the default CONTRIBUTING.md + V96-anchored PR body.
+
+        `repo_root` unused — this loom always creates a new file."""
         return LoomPatch(
             loom_id=self.loom_id,
             target_path=finding.target_path,

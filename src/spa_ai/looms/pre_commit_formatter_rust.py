@@ -168,7 +168,8 @@ class PreCommitFormatterRustLoom:
             )
         ]
 
-    def propose_patch(self, finding: LoomFinding) -> LoomPatch:
+    def propose_patch(self, finding: LoomFinding, repo_root: Path) -> LoomPatch:
+        """`repo_root` unused — this loom always creates a new file."""
         return LoomPatch(
             loom_id=self.loom_id,
             target_path=finding.target_path,

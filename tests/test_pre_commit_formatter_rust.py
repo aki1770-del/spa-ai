@@ -39,7 +39,7 @@ def test_detect_returns_empty_when_yml_already_present(rust_repo: Path) -> None:
 def test_propose_patch_includes_rustfmt_hook(rust_repo: Path) -> None:
     loom = PreCommitFormatterRustLoom()
     finding = loom.detect(rust_repo)[0]
-    patch = loom.propose_patch(finding)
+    patch = loom.propose_patch(finding, rust_repo)
 
     # Promise 2: every halt cites its Jidoka rationale.
     assert "Why this halt" in patch.pr_body
@@ -59,7 +59,7 @@ def test_propose_patch_includes_baseline_hooks(rust_repo: Path) -> None:
     """Rust loom inherits the language-agnostic baseline + adds rustfmt."""
     loom = PreCommitFormatterRustLoom()
     finding = loom.detect(rust_repo)[0]
-    patch = loom.propose_patch(finding)
+    patch = loom.propose_patch(finding, rust_repo)
     assert "trailing-whitespace" in patch.contents
     assert "end-of-file-fixer" in patch.contents
     assert "check-yaml" in patch.contents
@@ -70,7 +70,7 @@ def test_propose_patch_includes_baseline_hooks(rust_repo: Path) -> None:
 def test_propose_patch_does_not_write_to_disk(rust_repo: Path) -> None:
     loom = PreCommitFormatterRustLoom()
     finding = loom.detect(rust_repo)[0]
-    _ = loom.propose_patch(finding)
+    _ = loom.propose_patch(finding, rust_repo)
     assert not (rust_repo / ".pre-commit-config.yaml").exists()
 
 
@@ -119,7 +119,7 @@ def test_rustfmt_hook_uses_check_flag(rust_repo: Path) -> None:
     """
     loom = PreCommitFormatterRustLoom()
     finding = loom.detect(rust_repo)[0]
-    patch = loom.propose_patch(finding)
+    patch = loom.propose_patch(finding, rust_repo)
     assert "cargo fmt -- --check" in patch.contents, (
         "rustfmt hook must invoke 'cargo fmt -- --check' so the hook halts "
         "on formatting drift instead of silently mutating files."

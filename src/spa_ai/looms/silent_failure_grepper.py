@@ -297,8 +297,10 @@ class SilentFailureGrepperLoom:
             )
         ]
 
-    def propose_patch(self, finding: LoomFinding) -> LoomPatch:
-        """Compose the audit-file contents from cached findings + Jidoka PR body."""
+    def propose_patch(self, finding: LoomFinding, repo_root: Path) -> LoomPatch:
+        """Compose the audit-file contents from cached findings + Jidoka PR body.
+
+        `repo_root` unused — findings were cached in `detect()`."""
         body_parts = [_AUDIT_HEADER]
         # Group findings by file for readability.
         by_file: dict[str, list[dict]] = {}

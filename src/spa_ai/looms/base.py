@@ -90,6 +90,16 @@ class Loom(Protocol):
         """Walk `repo_root` and return findings. Must not write to disk."""
         ...
 
-    def propose_patch(self, finding: LoomFinding) -> LoomPatch:
-        """Generate a patch for a single finding. Must not write to disk."""
+    def propose_patch(self, finding: LoomFinding, repo_root: Path) -> LoomPatch:
+        """Generate a patch for a single finding. Must not write to disk.
+
+        `repo_root` is the absolute path to the repository the loom scanned
+        in `detect()`. Looms that need to MERGE with existing files (e.g.,
+        appending a hook to an existing pre-commit-config) read those files
+        via `repo_root / finding.target_path`. Looms that always create
+        new files (most loom classes) can ignore `repo_root`.
+
+        Reading from `repo_root` is permitted; writing is forbidden — disk
+        writes are restricted to the `--apply` path in the CLI per
+        promises.md Promise 4."""
         ...

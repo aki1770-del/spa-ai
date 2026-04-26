@@ -31,8 +31,19 @@ def test_scanner_finds_pre_commit_gap_in_synthetic_repo(synthetic_repo: Path) ->
 
 
 def test_scanner_returns_empty_when_no_gaps(synthetic_repo: Path) -> None:
-    """Plug all known gaps for the synthetic repo's loom set."""
-    (synthetic_repo / ".pre-commit-config.yaml").write_text("repos: []\n")
+    """Plug all known gaps for the synthetic repo's loom set.
+
+    pre-commit-config must include end-of-file-fixer (else EofNewlineLoom fires).
+    CONTRIBUTING.md must exist.
+    No silent-failure shapes in any .py (synthetic_repo has none by default).
+    """
+    (synthetic_repo / ".pre-commit-config.yaml").write_text(
+        "repos:\n"
+        "  - repo: https://github.com/pre-commit/pre-commit-hooks\n"
+        "    rev: v4.6.0\n"
+        "    hooks:\n"
+        "      - id: end-of-file-fixer\n"
+    )
     (synthetic_repo / "CONTRIBUTING.md").write_text("# Contributing\n")
     scanner = RepoScanner(default_registry())
     findings = scanner.scan(synthetic_repo)

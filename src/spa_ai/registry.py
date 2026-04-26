@@ -53,6 +53,7 @@ def default_registry() -> LoomRegistry:
     a time — each new loom earns its place by passing tests + review.
     """
     from .looms.contributing_md import ContributingMdLoom
+    from .looms.eof_newline import EofNewlineLoom
     from .looms.pre_commit_formatter import PreCommitFormatterLoom
     from .looms.pre_commit_formatter_rust import PreCommitFormatterRustLoom
     from .looms.silent_failure_grepper import SilentFailureGrepperLoom
@@ -62,4 +63,5 @@ def default_registry() -> LoomRegistry:
     reg.register(PreCommitFormatterRustLoom())
     reg.register(ContributingMdLoom())
     reg.register(SilentFailureGrepperLoom())
+    reg.register(EofNewlineLoom())
     return reg

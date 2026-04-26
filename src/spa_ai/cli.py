@@ -75,7 +75,7 @@ def _cmd_propose(args: argparse.Namespace) -> int:
         return 0
 
     for finding in findings:
-        patch = loom.propose_patch(finding)
+        patch = loom.propose_patch(finding, repo)
         target = repo / patch.target_path
 
         print(f"## Loom: {patch.loom_id}")
