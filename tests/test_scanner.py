@@ -31,7 +31,9 @@ def test_scanner_finds_pre_commit_gap_in_synthetic_repo(synthetic_repo: Path) ->
 
 
 def test_scanner_returns_empty_when_no_gaps(synthetic_repo: Path) -> None:
+    """Plug all known gaps for the synthetic repo's loom set."""
     (synthetic_repo / ".pre-commit-config.yaml").write_text("repos: []\n")
+    (synthetic_repo / "CONTRIBUTING.md").write_text("# Contributing\n")
     scanner = RepoScanner(default_registry())
     findings = scanner.scan(synthetic_repo)
     assert findings == []

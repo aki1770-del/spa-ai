@@ -52,10 +52,12 @@ def default_registry() -> LoomRegistry:
     Per principles.md V65 Sekishō-idai, the registry grows one stone at
     a time — each new loom earns its place by passing tests + review.
     """
+    from .looms.contributing_md import ContributingMdLoom
     from .looms.pre_commit_formatter import PreCommitFormatterLoom
     from .looms.pre_commit_formatter_rust import PreCommitFormatterRustLoom
 
     reg = LoomRegistry()
     reg.register(PreCommitFormatterLoom())
     reg.register(PreCommitFormatterRustLoom())
+    reg.register(ContributingMdLoom())
     return reg
