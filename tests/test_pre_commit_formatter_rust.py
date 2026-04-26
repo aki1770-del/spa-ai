@@ -131,6 +131,7 @@ def test_rustfmt_hook_uses_check_flag(rust_repo: Path) -> None:
         "with `pass_filenames: false` and `cargo fmt`, the hook checks the "
         "whole workspace."
     )
-    assert "does not mutate" in body_lower or "do not mutate" in body_lower or "does not modify" in body_lower or "halt" in body_lower, (
+    halt_phrases = ("does not mutate", "do not mutate", "does not modify", "halt")
+    assert any(phrase in body_lower for phrase in halt_phrases), (
         "PR body must explain that --check halts rather than mutating files."
     )

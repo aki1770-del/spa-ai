@@ -1,0 +1,46 @@
+# SPA AI — CI workflow.
+#
+# First compliance with OPS-RULE-042 (CI-Before-Release Gate, ratified
+# VGC-167 2026-04-26). Runs the full test suite + ruff lint on every
+# pull_request and on every push to main, fail-closed.
+#
+# Why this exists: spa-ai 0.3.0 release prep surfaced a stale assertion
+# in tests/test_cli.py that had silently rotted across two merges (PRs
+# #11 + #13 each added a loom to the registry without updating the
+# CLI test). The release-build pytest was load-bearing-by-accident.
+# Per V14 silent-failure-anti-Jidoka: assertions whose truth value is
+# never exercised between merges are exactly the failure mode this
+# repo's product (SilentFailureGrepperLoom) was built to catch. We
+# eat our own dog food.
+#
+# Vision: sakichi=14, method=[77,18,99], stance=[22,100].
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package + dev deps
+        run: pip install -e ".[dev]"
+
+      - name: Run pytest
+        run: pytest -v
+
+      - name: Run ruff check
+        run: ruff check src tests

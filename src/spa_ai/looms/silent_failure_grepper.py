@@ -277,7 +277,8 @@ class SilentFailureGrepperLoom:
             # Skip vendored / virtualenv / build trees.
             if any(part.startswith(".") and part != ".github" for part in py_path.parts):
                 continue
-            if any(part in ("venv", ".venv", "build", "dist", "__pycache__") for part in py_path.parts):
+            skip_dirs = ("venv", ".venv", "build", "dist", "__pycache__")
+            if any(part in skip_dirs for part in py_path.parts):
                 continue
             self._cached_findings.extend(_scan_file(py_path))
 
