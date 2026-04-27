@@ -86,14 +86,26 @@ def _hash_repo(repo_root: Path) -> str:
     return "sha256:" + hashlib.sha256(material).hexdigest()
 
 
-def build_report(repo_root: Path, findings: Iterable[LoomFinding]) -> dict:
+def build_report(
+    repo_root: Path,
+    findings: Iterable[LoomFinding],
+    driver_profile: str | None = None,
+) -> dict:
     """Build the report dict for a single scan invocation.
 
     Pure function — no I/O, no side effects. The caller decides whether
     to write it; this lets the CLI print the dict in a future
     `--dry-run-telemetry` mode without ever touching disk.
+
+    The optional `driver_profile` is a free-form string the app
+    developer self-declares about their own app's user-population — NOT
+    about any individual user. Examples: "ageing-rural", "snow-zone-
+    experienced", "novice-urban", "professional", "agricultural-
+    forestry", "mixed", or any developer-chosen label. Spa-ai does not
+    validate or constrain the value; it is recorded verbatim. This
+    field is class-level / app-level, never cross-linked to identity.
     """
-    return {
+    report: dict = {
         "schema_version": _SCHEMA_VERSION,
         "timestamp": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
         "spa_ai_version": _spa_ai_version(),
@@ -108,12 +120,16 @@ def build_report(repo_root: Path, findings: Iterable[LoomFinding]) -> dict:
             for f in findings
         ],
     }
+    if driver_profile is not None:
+        report["driver_profile"] = driver_profile
+    return report
 
 
 def write_report(
     repo_root: Path,
     findings: Iterable[LoomFinding],
     report_path: Path | None = None,
+    driver_profile: str | None = None,
 ) -> Path:
     """Append one JSON line for this scan to the report file.
 
@@ -123,12 +139,16 @@ def write_report(
 
     Honors the SPA_AI_USAGE_REPORT_PATH env var if set, for users who
     want the file somewhere other than ~/.spa-ai/.
+
+    Optional `driver_profile` is recorded if set — see `build_report`
+    docstring for semantics (class-level / app-level; never cross-link
+    to identity).
     """
     if report_path is None:
         env = os.environ.get("SPA_AI_USAGE_REPORT_PATH")
         report_path = Path(env) if env else _DEFAULT_REPORT_FILE
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report = build_report(repo_root, list(findings))
+    report = build_report(repo_root, list(findings), driver_profile=driver_profile)
     with report_path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(report, separators=(",", ":")) + "\n")
     return report_path
