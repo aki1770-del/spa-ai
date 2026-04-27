@@ -210,12 +210,12 @@ def _cmd_scan(args: argparse.Namespace) -> int:
     findings = scanner.scan(repo)
 
     if args.report_anonymous_usage:
-        report_path = write_report(repo, findings)
+        report_path = write_report(repo, findings, driver_profile=args.driver_profile)
         if args.format != "json":
             print(f"[telemetry] Wrote anonymized usage report to {report_path}")
 
     if args.format == "json":
-        out = {
+        out: dict = {
             "schema_version": 1,
             "command": "scan",
             "spa_ai_version": _spa_ai_version(),
@@ -231,6 +231,8 @@ def _cmd_scan(args: argparse.Namespace) -> int:
                 for f in findings
             ],
         }
+        if args.driver_profile is not None:
+            out["driver_profile"] = args.driver_profile
         print(_json.dumps(out, indent=2))
         return 0
 
@@ -268,9 +270,12 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         registry = default_registry()
         scanner = RepoScanner(registry)
         findings = scanner.scan(repo)
-        report_path = write_report(repo, findings)
+        report_path = write_report(repo, findings, driver_profile=args.driver_profile)
         if args.format != "json":
             print(f"[telemetry] Wrote anonymized usage report to {report_path}")
+
+    if args.driver_profile is not None:
+        report["driver_profile"] = args.driver_profile
 
     if args.format == "json":
         print(_json.dumps(report, indent=2))
@@ -353,7 +358,7 @@ def _add_format_arg(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_telemetry_arg(parser: argparse.ArgumentParser) -> None:
-    """Add --report-anonymous-usage to a subparser."""
+    """Add --report-anonymous-usage and --driver-profile to a subparser."""
     parser.add_argument(
         "--report-anonymous-usage",
         action="store_true",
@@ -364,6 +369,21 @@ def _add_telemetry_arg(parser: argparse.ArgumentParser) -> None:
             "sha256(git origin URL or path), spa-ai version, per-loom "
             "(id, vision, severity, target_path) summary. NOT captured: "
             "file contents, maintainer names, commit hashes."
+        ),
+    )
+    parser.add_argument(
+        "--driver-profile",
+        type=str,
+        default=None,
+        help=(
+            "Optional free-form label describing the user-population "
+            "your app primarily serves (e.g., 'ageing-rural', "
+            "'snow-zone-experienced', 'novice-urban', 'professional', "
+            "'agricultural-forestry', 'mixed', or any developer-chosen "
+            "string). Recorded verbatim in the usage report when "
+            "--report-anonymous-usage is set. CLASS-LEVEL only — this "
+            "is about your app's user-population, NOT about any "
+            "individual user. Never cross-linked to identity."
         ),
     )
 

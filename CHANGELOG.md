@@ -6,7 +6,26 @@ All notable changes to SPA AI will be documented here.
 
 ### Added
 
-#### `spa-ai doctor` + `--format=json` — W3 (this PR)
+#### Optional `--driver-profile` field on `scan` + `doctor` (this PR)
+
+- Adds `--driver-profile <label>` CLI flag to both `scan` and `doctor`.
+  The label is a free-form string (e.g., `ageing-rural`,
+  `snow-zone-experienced`, `novice-urban`, `professional`,
+  `agricultural-forestry`, `mixed`, or any developer-chosen string).
+  Spa-ai records the label verbatim; no validation, no enum constraint.
+- When `--report-anonymous-usage` is also passed, the label is included
+  as an additional field (`driver_profile`) in the JSONL telemetry record.
+- When `--format=json` is passed (without telemetry), the label is
+  included in the JSON output document.
+- Class-level only — describes the app's user-population, NOT any
+  individual user. Never cross-linked to identity.
+- `build_report` and `write_report` in `src/spa_ai/telemetry.py` accept
+  optional `driver_profile` keyword.
+- Tests: `tests/test_driver_profile_field.py` — 11 tests covering
+  build_report omission/inclusion, write_report JSONL output, scan +
+  doctor CLI in both telemetry-write mode and JSON-output mode.
+
+#### `spa-ai doctor` + `--format=json` — W3 (prior PR)
 
 - **`spa-ai doctor <repo>`** — new subcommand. One-command introspection for
   the maintainer about her own repo. Reports each loom's status as
