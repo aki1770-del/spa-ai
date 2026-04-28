@@ -55,7 +55,71 @@ Both outcomes are exactly what MRA-1 was conceived to surface, and both happened
 
 ---
 
-## Loom #3 (candidate, held) — Verify-First Gate post-audit-swarm
+## Loom #3 — Literature Drift Detector
+
+**Codified as**: `LiteratureDriftDetectorLoom` (sakichi vision 14 — silent
+failure is anti-Jidoka — at the calibration layer), shipped in spa-ai 0.5.0.
+
+**Failure that prompted it**: an aki1770-del-owned downstream package
+(`navigation_safety_core` 0.4.0) shipped per-driver-class threshold magnitudes
+calibrated to inline literature citations — `arxiv 2410.06388`, `PubMed
+16313881` (Konstantopoulos novice fog hazard-perception), `PubMed 22664714`
+(novice-fog crash-rate elevation). The pre-publish gate (a literature audit
+performed by hand at release time) verified each citation was current in
+April 2026. But nothing in the toolchain stopped a citation from rotting
+silently across the next 12-24 months. Cited papers get retracted, preprints
+reach final form with revised numbers, standards bodies amend, superseding
+studies appear. Without a re-scan loom, the audit promise decays into a
+publish-time snapshot — and downstream consumers absorb the drift in the form
+of alert thresholds calibrated to year-old evidence.
+
+**5-Whys** (terminating at mechanism, not blame, per Vision 18):
+
+1. Why might a year-old preprint citation calibrate this year's alerts? →
+   Nothing scans citations for age after publish.
+2. Why doesn't anything scan? → The pre-publish audit was scoped to "is this
+   citation real today?" — not to "will this citation still be current next
+   year?"
+3. Why was the scope narrow? → Maintaining a recurring scan cadence is a
+   discipline that needs a loom; there isn't one.
+4. Why isn't there a loom? → Literature drift is a slow failure mode; the
+   pre-publish audit caught the first instance, so the discipline never
+   formalised.
+5. Why does the slow shape matter? → Slow failure modes are exactly the V14
+   silent-failure pattern. The gauge that breaks once at publish IS the
+   audit; without re-scan, the gauge then sits broken for months without
+   surfacing.
+
+**The installed loom**: per-language regex over source comments (Python `#`,
+Dart `///` `//`, Rust `///` `//!` `//`, C++ `//`) capturing citation tokens
+(`cite:`, `per <Author year>`, `arxiv <ID>`, `PubMed <ID>`, `PMC<N>`, `DOI`,
+`RFC`, `ISO`). Date resolved by priority: explicit bracketed date in citation
+→ embedded date in token (arxiv `YYMM`) → companion `# verified: YYYY-MM-DD`
+marker on next line → otherwise marked `LOOKUP-REQUIRED` (PMID/DOI; the loom
+makes no network calls) or `UNKNOWN-DATE`. Default threshold 18 months
+(configurable via `.spa-ai-citation-drift.toml`). Built-in allowlist for RFC
+and ISO identifiers; maintainer can extend or use the `[perpetual]` token
+inline. The patch IS the audit (`.spa-ai-citation-drift.md`); no source
+rewrite, ever.
+
+**Why 18 months default and not the original 12-month proposal**: medical
+treatment-guideline currency lives at ~24 months; aviation human-factors
+review cycles at 2-5 years; automotive psychophysics underlying SNGNav-class
+calibrations is decade-stable on mechanism but cohort-effect-shifting on
+5-10 year scale. 12 months over-warns against stable evidence — itself a V14
+risk against the maintainer's attention. 24 months under-warns against
+fast-moving cybersecurity and ML literature. 18 months splits it; the audit
+row records the threshold that fired so the maintainer sees by how much, and
+per-project config tightens or loosens at one TOML line.
+
+**First post-ratification application**: validated against the
+`navigation_safety_config.dart` excerpt (lines 46-80) carrying the three
+real citations above; the loom surfaces all three correctly (arxiv via
+embedded-in-token date-source; both PubMed entries as `LOOKUP-REQUIRED`).
+
+---
+
+## Loom #4 (candidate, held) — Verify-First Gate post-audit-swarm
 
 **Status**: candidate; held for the next governance docket.
 **Failure pattern that prompted it**: audit swarms produce a fraction of false-positive findings — agents on truncated context invent plausible-sounding bugs in code they couldn't fully see. On the day MRA-1 + SISE-1 were ratified, two of three swarm-flagged "real bugs" turned out to be false positives when verified against actual current code (the bug shape was real-sounding, but the code already had the missing safeguard).

@@ -54,6 +54,7 @@ def default_registry() -> LoomRegistry:
     """
     from .looms.contributing_md import ContributingMdLoom
     from .looms.eof_newline import EofNewlineLoom
+    from .looms.literature_drift_detector import LiteratureDriftDetectorLoom
     from .looms.pre_commit_formatter import PreCommitFormatterLoom
     from .looms.pre_commit_formatter_rust import PreCommitFormatterRustLoom
     from .looms.silent_failure_grepper import SilentFailureGrepperLoom
@@ -64,4 +65,5 @@ def default_registry() -> LoomRegistry:
     reg.register(ContributingMdLoom())
     reg.register(SilentFailureGrepperLoom())
     reg.register(EofNewlineLoom())
+    reg.register(LiteratureDriftDetectorLoom())
     return reg

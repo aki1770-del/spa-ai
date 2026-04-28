@@ -2,6 +2,118 @@
 
 All notable changes to SPA AI will be documented here.
 
+## [0.5.0]
+
+Loom catalog grows 5 → 6. The Sakichi 100 visions now have a citation-layer
+detector for V14 (silent-failure-anti-Jidoka): inline literature citations in
+source code that have aged past a configurable drift threshold get surfaced
+to the maintainer for re-verification — without the loom making any network
+call or rewriting any source line.
+
+### Added
+
+#### `LiteratureDriftDetectorLoom` — V14 citation-layer drift catch (this release)
+
+- `src/spa_ai/looms/literature_drift_detector.py` — new loom. Per-language
+  regex over source comments (Python `#`, Dart `///` `//`, Rust `///` `//!`
+  `//`, C++ `//`) capturing citation tokens — `cite: <ref> [YYYY-MM]`, `per
+  <Author year>`, `arxiv <ID>`, `PubMed <ID>`, `PMC<N>`, `DOI`, `RFC`, `ISO`.
+- Tiered grammar: STRICT (`cite:` tag with explicit bracketed date,
+  drift-checkable directly) and PERMISSIVE (token-level citations,
+  drift-checkable when an embedded date is parseable).
+- Date extraction priority: explicit-bracketed → embedded-in-token (arxiv
+  `YYMM`) → companion `# verified: <YYYY-MM-DD>` marker → otherwise marked
+  `LOOKUP-REQUIRED` (PMID/DOI/PMC; the loom makes **no network calls**) or
+  `UNKNOWN-DATE`. The audit row records the date-source so the maintainer
+  sees the confidence of each row at a glance.
+- **Default drift threshold: 18 months.** Per-project override via
+  `.spa-ai-citation-drift.toml` at the repo root (`threshold_months = 12`,
+  etc.). The 18-month default is calibrated to the audit-fatigue trade-off:
+  12mo over-warns against stable psychophysics literature (creating a V14
+  risk against the maintainer's attention against citations whose mechanism
+  is decade-stable); 24mo under-warns against fast-moving cybersecurity and
+  ML literature; 18mo splits it. The row format records the threshold that
+  fired so the maintainer sees by how much.
+- False-positive control (three layers): (a) `[perpetual]` inline tag the
+  maintainer adds to dated-by-design references; (b) built-in allowlist for
+  `RFC <N>` and `ISO <N>[-<part>:<year>]` identifiers; (c) `# verified:
+  YYYY-MM-DD` companion marker resets the drift clock to that date at the
+  next scan.
+- The patch IS the audit artifact — `.spa-ai-citation-drift.md` at the repo
+  root listing each surfaced citation with file:line + cited-date +
+  date-source + drift distance + threshold-that-fired. Per Promise 3 + V99
+  (write-decision-down): the loom speaks via the audit, not by rewriting the
+  maintainer's source.
+- 3-slot vision attribution: `sakichi=14`, `method=[77, 18, 99]`,
+  `stance=[22, 25, 32, 100]`.
+- Skips `venv/.venv/build/dist/__pycache__/node_modules` + dot-dirs except
+  `.github`. Suffix-gated per-language (mirrors `silent_failure_grepper`'s
+  Python-only walk discipline at the file-extension level).
+
+#### Real-data integration test
+
+- `tests/fixtures/navigation_safety_config_excerpt.dart` — verbatim excerpt
+  (lines 46-80) from `aki1770-del/SNGNav` `navigation_safety_core` 0.4.0,
+  carrying inline citations next to per-driver-class threshold magnitudes
+  (`arxiv 2410.06388`, `PubMed 16313881`, `PubMed 22664714`).
+- `tests/test_literature_drift_navigation_safety_core.py` — integration test
+  asserting the loom surfaces all three citations on the real-data fixture
+  and classifies the arxiv entry via `embedded-in-token` date-source.
+
+### Registry
+
+- `default_registry()` size: 5 → 6. New shipping list:
+  1. `PreCommitFormatterLoom` (V20)
+  2. `PreCommitFormatterRustLoom` (V20)
+  3. `ContributingMdLoom` (V96)
+  4. `SilentFailureGrepperLoom` (V14)
+  5. `EofNewlineLoom` (V15)
+  6. `LiteratureDriftDetectorLoom` (V14)
+
+### `spa-ai doctor` extension
+
+- `src/spa_ai/cli.py` `_classify_loom_status` extended for the new loom.
+  Repos with no Python/Dart/Rust/C++ source files (after venv/build skips)
+  are classified `not_applicable`; otherwise `clean` if no aged citations
+  surface.
+
+### Tests
+
+- 152 tests passing (was 117; +35 from the new loom + 1 registry guard).
+- `tests/test_literature_drift_detector.py` — 31 tests covering tiered
+  grammar, per-language detection, date-extraction priority chain
+  (explicit-bracketed / embedded-in-token / verified-marker /
+  lookup-pending), 18-month threshold boundary cases (17mo passes / 19mo
+  flags), `[perpetual]` allowlist, RFC + ISO built-in allowlist, TOML config
+  override (threshold + extra allowlist), malformed-config fallback, audit
+  doc structure, no-disk-write contract, and venv-skip discipline.
+- `tests/test_literature_drift_navigation_safety_core.py` — 4 tests
+  covering the real-data integration case.
+
+### Behavior change vs 0.4.0
+
+- `RepoScanner.scan()` will now return more findings on repos that carry
+  inline literature citations in supported languages and have not yet been
+  audited. This is the intended growth of the Sakichi loom catalog (V65
+  Sekishō-idai — one stone at a time).
+- The CLI `propose --loom literature-drift-detector` UX is the same as any
+  other loom; opt-in per id; `scan` reports all gaps; the human picks which
+  to install.
+
+### Out of scope for this release (V65 sekishō-idai — small stones, named deferrals)
+
+- Network-fetch verification of citations (PMID / DOI / arxiv-status lookup).
+- IDE / editor surface integration.
+- Auto-rewrite of source code lines.
+- Per-domain auto-thresholds (medical 12mo / automotive 18mo / spec-class
+  perpetual). The configurable single threshold suffices until evidence
+  forces a per-domain split.
+- git-blame fallback for date-of-last-touch when neither explicit nor
+  embedded date is available. Adds coverage but introduces re-formatting /
+  file-move drift artefacts the v1 audit shouldn't carry.
+
+---
+
 ## [Unreleased]
 
 ### Added

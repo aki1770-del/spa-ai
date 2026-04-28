@@ -37,7 +37,7 @@ def test_doctor_human_output_on_synthetic_repo(synthetic_repo: Path) -> None:
     out = result.stdout
     # Header + summary present
     assert "SPA AI doctor" in out
-    assert "Scanned 5 loom(s)" in out
+    assert "Scanned 6 loom(s)" in out
     assert "would fire" in out
     # Both gap looms appear in WOULD FIRE section
     assert "pre-commit-formatter" in out
@@ -115,7 +115,7 @@ def test_doctor_json_schema_v1(synthetic_repo: Path) -> None:
 def test_doctor_json_loom_entries_have_required_fields(synthetic_repo: Path) -> None:
     result = _run_cli("doctor", str(synthetic_repo), "--format=json")
     obj = json.loads(result.stdout)
-    assert len(obj["looms"]) == 5
+    assert len(obj["looms"]) == 6
     for entry in obj["looms"]:
         assert "loom_id" in entry
         assert "sakichi_vision_id" in entry
@@ -128,14 +128,14 @@ def test_doctor_json_summary_counts_correct(synthetic_repo: Path) -> None:
     result = _run_cli("doctor", str(synthetic_repo), "--format=json")
     obj = json.loads(result.stdout)
     s = obj["summary"]
-    assert s["total_looms"] == 5
+    assert s["total_looms"] == 6
     # Sum of statuses == total
-    assert s["would_fire_count"] + s["clean_count"] + s["not_applicable_count"] == 5
+    assert s["would_fire_count"] + s["clean_count"] + s["not_applicable_count"] == 6
     # synthetic_repo: 2 would fire (pre-commit-formatter + contributing-md);
-    # 0 clean; 3 not_applicable (rust / silent-failure / eof)
+    # 0 clean; 4 not_applicable (rust / silent-failure / eof / literature-drift-detector)
     assert s["would_fire_count"] == 2
     assert s["clean_count"] == 0
-    assert s["not_applicable_count"] == 3
+    assert s["not_applicable_count"] == 4
 
 
 def test_doctor_json_would_fire_entry_includes_sample(synthetic_repo: Path) -> None:
