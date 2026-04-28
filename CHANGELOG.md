@@ -6,6 +6,55 @@ All notable changes to SPA AI will be documented here.
 
 ### Added
 
+#### `release.yml` — PyPI Trusted Publishing workflow (this PR)
+
+- New workflow `.github/workflows/release.yml` triggers on tag push
+  (`v*`) and publishes to PyPI via OIDC Trusted Publishing
+  (`pypa/gh-action-pypi-publish@release/v1`). No long-lived API
+  tokens are stored in repository secrets.
+- Three jobs: `test` (mirrors `ci.yml`'s 3.11 + 3.12 matrix verbatim
+  to satisfy OPS-RULE-042 on the tag-push commit), `build`
+  (`python -m build --sdist --wheel`), `publish` (downloads the
+  artifact, mints the OIDC token, uploads to PyPI). `id-token: write`
+  is scoped to the publish job only.
+- The `publish` job runs in the `pypi` environment so the publisher
+  surfaces in the PyPI dashboard config and required-reviewers /
+  branch-protection can be added later without editing the workflow.
+- README gets a new **Releasing** section documenting the
+  bump → CHANGELOG → push → tag → publish flow plus the one-time
+  PyPI dashboard pending-publisher fields the maintainer must enter.
+
+#### Why this exists
+
+- spa-ai 0.4.0 was published manually on 2026-04-27 because PyPI
+  deprecated username/password and the maintainer pasted an API
+  token by hand at release time. That manual step is the
+  load-bearing-by-accident gate — exactly the V20 cheap-stop /
+  V14 silent-failure-anti-Jidoka pattern this repo's product was
+  built to catch in OTHER repos. We eat our own dog food.
+- Per OPS-RULE-041 (Andon-must-produce-loom): pulling the cord on
+  manual-publish friction obligates installing the loom that
+  catches the same friction next time. This workflow IS that loom.
+- Per OPS-RULE-042 (CI-Before-Release Gate): the `test` job
+  re-establishes the green-CI invariant on the tag-push SHA before
+  any version is published.
+
+#### `release.yml` 3-slot vision
+
+- `sakichi=14` (silent-failure — the manual token paste was a
+  human-vigilance gate; the loom replaces it with an automated
+  cryptographic identity proof)
+- `method=[77, 18, 99]` (genchi-genbutsu the actual PyPI publish
+  protocol / 5-Whys to the absent loom / write-it-down as workflow
+  yaml)
+- `stance=[22, 96, 100]` (loom-serves-weaver — protects future-self
+  + future-contributor from token-rotation drift / V96
+  maintainers-as-edge-developers — the maintainer of this repo
+  deserves the same Jidoka standard we ship to others / V100
+  equal-dignity)
+
+---
+
 #### `spa-ai telemetry aggregate` — local-only aggregation report (this PR)
 
 - New subcommand: `spa-ai telemetry aggregate [--driver-profile <label>] [--format=human|json]`.

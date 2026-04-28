@@ -1,0 +1,116 @@
+# SPA AI — release workflow.
+#
+# Publishes spa-ai to PyPI via OIDC Trusted Publishing on tag push
+# (semver-prefix tags `v*`). No long-lived API tokens stored in repo
+# secrets; the `id-token: write` permission lets PyPI verify the
+# workflow's identity for this exact (repo, workflow, environment)
+# tuple. See https://docs.pypi.org/trusted-publishers/ for the
+# authoritative protocol.
+#
+# Why this exists: spa-ai 0.4.0 was published manually on 2026-04-27
+# because PyPI deprecated username/password and the maintainer had to
+# paste an API token by hand at release time. That manual step is the
+# load-bearing-by-accident gate — exactly the V20 cheap-stop /
+# V14 silent-failure-anti-Jidoka shape the SilentFailureGrepperLoom
+# was built to catch in OTHER repos. We eat our own dog food: the
+# weaver should not be the last line of defense against a forgotten
+# token rotation, a fat-fingered version, or a publish-from-wrong-
+# branch slip. Per OPS-RULE-041 (Andon-must-produce-loom, ratified
+# VGC-166 2026-04-26): pulling the cord on the manual-publish friction
+# obligates installing the loom that catches the same friction next
+# time. This workflow IS that loom.
+#
+# Companion gate: OPS-RULE-042 (CI-Before-Release Gate, ratified
+# VGC-167 2026-04-26) requires CI to fail-closed before any version is
+# published. The `test` job here mirrors `ci.yml`'s matrix verbatim
+# (Python 3.11 + 3.12, pytest + ruff) so a tag pushed to a commit that
+# would not pass CI cannot publish. This is duplication, not reuse,
+# on purpose: tag-push events do not inherit prior CI status, and
+# `workflow_run` chaining adds an ordering surface we do not yet need
+# (V65 sekishō-idai — accumulate one stone).
+#
+# Vision: sakichi=14, method=[77, 18, 99], stance=[22, 96, 100].
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+# Workflow-level permissions are minimal (read). The publish job
+# elevates to `id-token: write` only when it actually needs to mint
+# the OIDC assertion. Least-privilege per PyPA guidance.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Mirrors ci.yml:25-46 verbatim (matrix + steps). Tag-push events
+    # do not inherit prior CI status, so we re-run the gate here.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package + dev deps
+        run: pip install -e ".[dev]"
+
+      - name: Run pytest
+        run: pytest -v
+
+      - name: Run ruff check
+        run: ruff check src tests
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build
+        run: pip install build
+
+      - name: Build sdist + wheel
+        run: python -m build --sdist --wheel
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    # `environment: pypi` surfaces the publish step in the PyPI
+    # dashboard's pending-publisher config and lets repo-owner add
+    # required reviewers / branch protections later without editing
+    # this file. See README "Releasing" section for one-time setup.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/spa-ai
+    permissions:
+      # OIDC token mint: ONLY on this job, ONLY for the duration
+      # of the publish step.
+      id-token: write
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI via OIDC Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
