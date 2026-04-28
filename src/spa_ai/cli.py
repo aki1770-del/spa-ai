@@ -1,6 +1,6 @@
 """SPA AI command-line interface.
 
-Three subcommands in v0.4:
+Subcommands in v0.4:
 
   spa-ai scan <path> [--format=human|json] [--report-anonymous-usage]
       Walk the repo, list missing looms with their Jidoka rationale.
@@ -17,9 +17,15 @@ Three subcommands in v0.4:
       (the maintainer goes to her own place — the repo — and observes
       what would change before any patch is proposed).
 
-The CLI deliberately omits `alert` and `submit` subcommands. Per
-commitments.md Commitment 1, SPA AI does not surface gaps as alerts;
-per V65 Sekishō-idai, we ship one stone at a time.
+  spa-ai telemetry aggregate [--driver-profile <label>] [--format=human|json]
+      Local-only aggregation over the JSONL the harness wrote. Counts
+      by driver_profile, by loom_id, by sakichi_vision_id. No network
+      call — reads only the local file at ~/.spa-ai/usage_reports.jsonl
+      (or $SPA_AI_USAGE_REPORT_PATH).
+
+The CLI deliberately omits `alert` and `telemetry submit` subcommands.
+Per commitments.md Commitment 1, SPA AI does not surface gaps as
+alerts; per V65 Sekishō-idai, we ship one stone at a time.
 """
 from __future__ import annotations
 
@@ -34,6 +40,7 @@ from .looms.base import LoomFinding
 from .registry import default_registry
 from .scanner import RepoScanner
 from .telemetry import write_report
+from .telemetry_aggregate import aggregate as _aggregate_reports
 
 
 def _spa_ai_version() -> str:
@@ -285,6 +292,68 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_aggregate_human(payload: dict, driver_profile_filter: str | None) -> None:
+    """Render aggregate report for human eyes."""
+    report_path = payload["report_path"]
+    print(f"SPA AI telemetry aggregate — {report_path}")
+    if driver_profile_filter is not None:
+        print(f"Filter: driver_profile == {driver_profile_filter!r}")
+    print(
+        f"Records counted: {payload['record_count']}; "
+        f"skipped (malformed / missing findings): {payload['skipped_line_count']}"
+    )
+    print()
+
+    by_profile = payload["by_driver_profile"]
+    by_loom = payload["by_loom_id"]
+    by_vision = payload["by_sakichi_vision_id"]
+
+    if not by_profile and not by_loom and not by_vision:
+        print(
+            "No telemetry data to aggregate. Run a scan with "
+            "`--report-anonymous-usage` to start recording, or set "
+            "$SPA_AI_USAGE_REPORT_PATH to point at the file."
+        )
+        return
+
+    _print_count_block("By driver_profile (record count)", by_profile)
+    _print_count_block("By loom_id (finding count)", by_loom)
+    _print_count_block("By sakichi_vision_id (finding count)", by_vision)
+
+
+def _print_count_block(title: str, counts: dict[str, int]) -> None:
+    print(f"{title}:")
+    if not counts:
+        print("  (none)")
+        print()
+        return
+    width = max(len(k) for k in counts)
+    for key, value in counts.items():
+        print(f"  {key.ljust(width)}  {value}")
+    print()
+
+
+def _cmd_telemetry_aggregate(args: argparse.Namespace) -> int:
+    result = _aggregate_reports(driver_profile_filter=args.driver_profile)
+    payload = result.to_dict()
+
+    if args.format == "json":
+        print(_json.dumps(payload, indent=2))
+        return 0
+
+    if not Path(payload["report_path"]).exists():
+        print(
+            "No telemetry recorded yet at "
+            f"{payload['report_path']}. Run a scan with "
+            "`--report-anonymous-usage` to start the local log, or set "
+            "$SPA_AI_USAGE_REPORT_PATH to redirect it."
+        )
+        return 0
+
+    _print_aggregate_human(payload, args.driver_profile)
+    return 0
+
+
 def _cmd_propose(args: argparse.Namespace) -> int:
     registry = default_registry()
 
@@ -427,6 +496,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Write the patch to disk (default: dry-run only).",
     )
     prop_p.set_defaults(func=_cmd_propose)
+
+    tele_p = sub.add_parser(
+        "telemetry",
+        help=(
+            "Inspect the local opt-in telemetry the harness wrote. "
+            "No network call — operates only on the local JSONL file."
+        ),
+    )
+    tele_sub = tele_p.add_subparsers(dest="telemetry_cmd", required=True)
+    agg_p = tele_sub.add_parser(
+        "aggregate",
+        help=(
+            "Aggregate local telemetry by driver_profile, loom_id, "
+            "and sakichi_vision_id."
+        ),
+    )
+    agg_p.add_argument(
+        "--driver-profile",
+        type=str,
+        default=None,
+        help=(
+            "Optional filter: only records whose driver_profile matches "
+            "this label contribute to per-loom and per-vision counts. "
+            "The per-profile axis still shows the full distribution so "
+            "the filter's effect is visible. Class-level only (about "
+            "your app's user-population, not any individual user)."
+        ),
+    )
+    _add_format_arg(agg_p)
+    agg_p.set_defaults(func=_cmd_telemetry_aggregate)
 
     args = parser.parse_args(argv)
     return int(args.func(args))
