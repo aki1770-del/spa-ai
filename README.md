@@ -81,6 +81,42 @@ request, not an alert; if we cannot offer a PR, we do not speak.
 pytest
 ```
 
+## Releasing
+
+Releases are published to PyPI automatically on tag push via OIDC
+Trusted Publishing — no API tokens are stored in the repository.
+The flow:
+
+1. Bump `version` in `pyproject.toml`.
+2. Move the `## [Unreleased]` section in `CHANGELOG.md` to a new
+   `## [x.y.z] — YYYY-MM-DD` section; add a fresh empty
+   `## [Unreleased]`.
+3. Commit and push to `main`. CI (`.github/workflows/ci.yml`) runs.
+4. After CI is green on the release commit, tag and push the tag:
+
+   ```bash
+   git tag v0.5.0
+   git push origin v0.5.0
+   ```
+
+5. The tag push triggers `.github/workflows/release.yml`, which
+   re-runs the test matrix, builds the sdist + wheel, and publishes
+   to PyPI via OIDC.
+
+### One-time PyPI dashboard setup (maintainer)
+
+Trusted Publishing requires a one-time pending-publisher entry on
+PyPI before the first OIDC publish can succeed. On
+<https://pypi.org/manage/project/spa-ai/settings/publishing/>:
+
+- **Owner**: `aki1770-del`
+- **Repository name**: `spa-ai`
+- **Workflow name**: `release.yml`
+- **Environment name**: `pypi`
+
+See <https://docs.pypi.org/trusted-publishers/> for the canonical
+protocol reference.
+
 ## Roadmap
 
 | Phase | Focus | Steps |
