@@ -147,6 +147,8 @@ class PreCommitFormatterRustLoom:
     sakichi_vision_id = 20
     method_vision_ids = [77, 18, 99]
     stance_vision_ids = [22, 25, 32, 100]
+    # Same chain as PreCommitFormatterLoom, Rust-specialized.
+    weaver_classes_served = ["maintainer", "first-contributor"]
 
     def detect(self, repo_root: Path) -> list[LoomFinding]:
         if not (repo_root / "Cargo.toml").exists():

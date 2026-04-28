@@ -16,14 +16,19 @@ A loom is a single Jidoka halt SPA AI knows how to detect and install. It is
 not an alert, not a notification, not a karma score. Per [`promises.md`](promises.md)
 Promise 3: a loom is a pull request. If We cannot offer a PR, We do not speak.
 
-Three contracts every loom honors (per [`looms/base.py`](../src/spa_ai/looms/base.py)):
+Four contracts every loom honors (per [`looms/base.py`](../src/spa_ai/looms/base.py)):
 
 1. **Three vision-attribution slots** — `sakichi_vision_id` (failure-mode the
    loom prevents), `method_vision_ids` (HOW the loom works), `stance_vision_ids`
    (HOW the weaver is treated). All three required.
-2. **`detect(repo_root: Path) -> list[LoomFinding]`** — walk the repo, return
+2. **One weaver-class declaration slot** — `weaver_classes_served` (WHO the
+   loom directly serves; canonical strings from
+   [`weaver_classes.py`](../src/spa_ai/looms/weaver_classes.py); see the
+   "Weaver-class declaration" section below). Optional with `[]` default for
+   backward-compat; documented as required for any new loom.
+3. **`detect(repo_root: Path) -> list[LoomFinding]`** — walk the repo, return
    findings. Must not write to disk.
-3. **`propose_patch(finding: LoomFinding) -> LoomPatch`** — given a finding,
+4. **`propose_patch(finding: LoomFinding) -> LoomPatch`** — given a finding,
    return a patch (file contents + PR body). Must not write to disk.
 
 Disk writes are restricted to the `--apply` path in the CLI, after human
@@ -136,6 +141,89 @@ The visions describing the loom's posture toward the maintainer:
 - **V100 equal-dignity** — for every weaver, regardless of project class.
 
 Both production looms declare `[22, 25, 32, 100]`.
+
+---
+
+## Weaver-class declaration — what the loom serves
+
+In addition to the three vision-attribution slots above, every loom declares
+a fourth slot naming WHO it directly serves. This is FACT-data — which
+classes of weaver receive the halt this loom installs — distinct from the
+stance/method/failure-mode visions which are posture declarations.
+
+### `weaver_classes_served` (list[str]) — the WHO
+
+A list of canonical weaver-class strings. Defaults to `[]` for backward-compat;
+omitting it does not break registration, but the doctor surface reports any
+loom with an empty list in an advisory bucket so the gap is visible.
+
+The v1 canonical set lives in
+[`src/spa_ai/looms/weaver_classes.py`](../src/spa_ai/looms/weaver_classes.py)
+as `KNOWN_WEAVER_CLASSES`:
+
+| Class | Substance |
+|---|---|
+| `maintainer` | Receives the PR; reviews; merges or closes. The repo's gatekeeper. |
+| `first-contributor` | Files first PR or first issue against the repo. |
+| `adopter` | Has the loom-output installed in their own repo (e.g., `.pre-commit-config.yaml` lives in their tree). |
+| `driver` | Downstream end-user whose map / route / safety depends on the stack the loom protects. |
+| `auditor` | Reads provenance / SBOM / compliance data; not necessarily a coder. |
+| `sub-agent` | AI sub-agent operating within an SPA-Actuator-class unit. |
+| `integrator` | Combines this package with other packages into a downstream product. |
+
+Examples (each shipped loom declares its own set):
+
+```python
+class PreCommitFormatterLoom:
+    weaver_classes_served = ["maintainer", "first-contributor"]
+
+class SilentFailureGrepperLoom:
+    weaver_classes_served = ["maintainer", "auditor", "driver"]
+```
+
+### Aliases and case-insensitivity
+
+The same module exports an `ALIASES` map for short / common variants:
+`"contributor" → "first-contributor"`, `"user" → "driver"`, `"agent" →
+"sub-agent"`, etc. `normalize_weaver_class("Contributor")` returns
+`"first-contributor"`. The doctor surface aggregates by canonical form, so
+a loom that declares an alias still aggregates under its canonical bucket.
+
+For new looms, prefer canonical strings directly — the canonical set is small
+enough to memorize and avoids one indirection at read time.
+
+### Open string-set discipline (declaring a class not yet canonical)
+
+A loom may declare a class that is not in `KNOWN_WEAVER_CLASSES` (for example,
+`"future-cohort"` per OPS-RULE-046, or a class specific to a domain the v1 set
+does not yet cover). The class will:
+
+- pass through the registry and registration without error,
+- appear in the doctor surface's `unknown_classes_declared` advisory bucket,
+- not contribute to the `served` aggregation (which counts canonical classes
+  only).
+
+If a non-canonical class becomes well-established in practice (multiple looms
+declare it; the substance is clear; no synonym already covers it), it can be
+promoted to canonical via governance review. This protects future-cohort
+exploration while keeping the v1 vocabulary documented.
+
+### How the doctor renders this
+
+`spa-ai doctor <repo>` aggregates declarations across the registry and prints
+a single block at the end:
+
+```
+Weaver-class coverage (6 loom(s)):
+  served:   maintainer (6/6), first-contributor (4/6), driver (2/6), auditor (2/6)
+  absent:   adopter (0/6), sub-agent (0/6), integrator (0/6)
+  unknown:  0 loom(s) declared no weaver_classes_served
+```
+
+The `absent` line is the load-bearing surface: any canonical class with zero
+loom support identifies a candidate for the next round of new looms. JSON
+output adds a `weaver_class_coverage` block under the same shape; schema is
+documented as `schema_version: 2` (v1 fields remain present and unchanged).
 
 ---
 

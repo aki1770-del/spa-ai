@@ -90,6 +90,10 @@ class EofNewlineLoom:
     sakichi_vision_id = 15
     method_vision_ids = [77, 18, 99]
     stance_vision_ids = [22, 25, 32, 100]
+    # Same chain as PreCommitFormatter — commit-time poka-yoke serves
+    # both the maintainer (no diff noise to review) and the first-contributor
+    # (their commit halts locally before the drift can leave the machine).
+    weaver_classes_served = ["maintainer", "first-contributor"]
 
     def detect(self, repo_root: Path) -> list[LoomFinding]:
         """Return a finding if pre-commit-config exists but lacks `end-of-file-fixer`.

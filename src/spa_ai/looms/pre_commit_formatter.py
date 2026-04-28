@@ -91,6 +91,9 @@ class PreCommitFormatterLoom:
     sakichi_vision_id = 20
     method_vision_ids = [77, 18, 99]
     stance_vision_ids = [22, 25, 32, 100]
+    # Maintainer never sees the formatting drift; first-contributor's commit
+    # halts locally before the drift can leave their machine.
+    weaver_classes_served = ["maintainer", "first-contributor"]
 
     def detect(self, repo_root: Path) -> list[LoomFinding]:
         """Return a single finding if no pre-commit config exists.

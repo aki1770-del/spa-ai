@@ -100,16 +100,22 @@ def test_doctor_rejects_non_git_path(tmp_path: Path) -> None:
 
 # -------- doctor: JSON output --------
 
-def test_doctor_json_schema_v1(synthetic_repo: Path) -> None:
+def test_doctor_json_schema_v2(synthetic_repo: Path) -> None:
+    """Schema bumped 1 -> 2 for the LoomDignityFrame addition.
+
+    All v1 fields remain present; new fields are additive
+    (`weaver_classes_served` per loom + `weaver_class_coverage` block).
+    """
     result = _run_cli("doctor", str(synthetic_repo), "--format=json")
     assert result.returncode == 0, result.stderr
     obj = json.loads(result.stdout)
-    assert obj["schema_version"] == 1
+    assert obj["schema_version"] == 2
     assert obj["command"] == "doctor"
     assert "spa_ai_version" in obj
     assert obj["repo"] == str(synthetic_repo.resolve())
     assert "looms" in obj
     assert "summary" in obj
+    assert "weaver_class_coverage" in obj
 
 
 def test_doctor_json_loom_entries_have_required_fields(synthetic_repo: Path) -> None:
@@ -122,6 +128,10 @@ def test_doctor_json_loom_entries_have_required_fields(synthetic_repo: Path) -> 
         assert entry["status"] in ("would_fire", "clean", "not_applicable")
         assert "finding_count" in entry
         assert "reason" in entry
+        # schema_version 2: per-loom weaver_classes_served is required
+        # (defaults to [] for any loom that predates the slot).
+        assert "weaver_classes_served" in entry
+        assert isinstance(entry["weaver_classes_served"], list)
 
 
 def test_doctor_json_summary_counts_correct(synthetic_repo: Path) -> None:

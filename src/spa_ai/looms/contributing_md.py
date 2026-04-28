@@ -163,6 +163,9 @@ class ContributingMdLoom:
     sakichi_vision_id = 96
     method_vision_ids = [77, 18, 99]
     stance_vision_ids = [22, 25, 32, 96, 100]
+    # Maintainer absorbs less per-contributor onboarding cost; first-contributor
+    # discovers norms before their first PR.
+    weaver_classes_served = ["maintainer", "first-contributor"]
 
     # Standard locations CONTRIBUTING.md is recognized at by GitHub.
     # If the file exists at any of these, the loom does not propose.
