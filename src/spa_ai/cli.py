@@ -102,6 +102,27 @@ def _classify_loom_status(
             )
         return ("clean", ".pre-commit-config has end-of-file-fixer hook")
 
+    if loom_id == "literature-drift-detector":
+        # Mirror the loom's own per-language file extensions.
+        suffixes = (".py", ".dart", ".rs", ".cpp", ".cc", ".cxx", ".h", ".hpp")
+        skip_dirs = ("venv", ".venv", "build", "dist", "__pycache__", "node_modules")
+        any_source = False
+        for p in repo.rglob("*"):
+            if not p.is_file() or p.suffix.lower() not in suffixes:
+                continue
+            if any(part in skip_dirs for part in p.parts):
+                continue
+            if any(part.startswith(".") and part != ".github" for part in p.parts):
+                continue
+            any_source = True
+            break
+        if not any_source:
+            return (
+                "not_applicable",
+                "no Python/Dart/Rust/C++ source files in repo (after venv/build skips)",
+            )
+        return ("clean", "source files scanned; no aged literature citations detected")
+
     # Unknown loom (external / future) — default to "clean" rather than fabricate.
     return ("clean", "no findings; applicability heuristic not defined for this loom")
 

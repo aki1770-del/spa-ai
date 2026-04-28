@@ -33,13 +33,13 @@ def test_default_registry_has_pre_commit_formatter_rust() -> None:
     assert "pre-commit-formatter-rust" in reg
 
 
-def test_default_registry_size_is_five() -> None:
-    """v0.3.x+ ships with five looms (pre-commit-formatter,
+def test_default_registry_size_is_six() -> None:
+    """v0.5.x ships with six looms (pre-commit-formatter,
     pre-commit-formatter-rust, contributing-md, silent-failure-grepper,
-    eof-newline). Guard prevents silent additions without an accompanying
-    test + CHANGELOG entry."""
+    eof-newline, literature-drift-detector). Guard prevents silent
+    additions without an accompanying test + CHANGELOG entry."""
     reg = default_registry()
-    assert len(reg) == 5
+    assert len(reg) == 6
 
 
 def test_default_registry_has_contributing_md() -> None:
@@ -55,6 +55,11 @@ def test_default_registry_has_silent_failure_grepper() -> None:
 def test_default_registry_has_eof_newline() -> None:
     reg = default_registry()
     assert "eof-newline" in reg
+
+
+def test_default_registry_has_literature_drift_detector() -> None:
+    reg = default_registry()
+    assert "literature-drift-detector" in reg
 
 
 def test_register_rejects_duplicate_id() -> None:
