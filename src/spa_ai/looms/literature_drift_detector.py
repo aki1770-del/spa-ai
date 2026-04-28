@@ -688,6 +688,12 @@ class LiteratureDriftDetectorLoom:
     sakichi_vision_id = 14
     method_vision_ids = [77, 18, 99]
     stance_vision_ids = [22, 25, 32, 100]
+    # Maintainer reviews the audit + decides per row; auditor consumes the
+    # provenance trail (citation + date-source + drift + verified-marker);
+    # driver downstream of an app whose thresholds are calibrated to the
+    # cited literature is the ultimate beneficiary of the re-verification
+    # discipline this audit invites.
+    weaver_classes_served = ["maintainer", "auditor", "driver"]
 
     # Stateful by design (per SilentFailureGrepper precedent): findings cached
     # in detect() so propose_patch() can compose the audit without re-walking.

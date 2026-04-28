@@ -2,6 +2,123 @@
 
 All notable changes to SPA AI will be documented here.
 
+## [0.6.0]
+
+Loom Protocol gains a fourth attribution slot — `weaver_classes_served` —
+naming WHO each loom directly serves. The framework can now answer the
+question it could not answer in 0.5.x: *which weaver-classes are absent
+from the loom roster?* The doctor surface aggregates declarations across
+the registry and reports served / absent / unknown buckets.
+
+### Added
+
+#### `Loom` Protocol — `weaver_classes_served` slot
+
+- `src/spa_ai/looms/base.py` — `Loom` Protocol gains a fourth class
+  attribute: `weaver_classes_served: list[str]`. Optional with `[]`
+  default for backward-compat (any external loom predating the slot
+  continues to register; the doctor surface flags it in an advisory
+  bucket so the gap is visible without breaking the registry contract).
+- `src/spa_ai/looms/weaver_classes.py` — new module. Exports a v1
+  canonical 7-class set as `KNOWN_WEAVER_CLASSES`: `maintainer`,
+  `first-contributor`, `adopter`, `driver`, `auditor`, `sub-agent`,
+  `integrator`. Plus an `ALIASES` map for short / common variants
+  (`contributor → first-contributor`, `user → driver`, etc.) and
+  `normalize_weaver_class(s)` for case-insensitive alias resolution.
+- **Open string-set discipline.** A loom may declare a class not in the
+  canonical set; the declaration passes through (no registry error) and
+  surfaces in the doctor's `unknown_classes_declared` advisory bucket.
+  This protects future-cohort exploration while keeping the v1
+  vocabulary documented. A locked enum would have made the framework
+  itself the violator of the equal-dignity stance it ships to other
+  repos.
+
+#### Per-loom annotations (all 6 shipped looms)
+
+| Loom | weaver_classes_served |
+|---|---|
+| `PreCommitFormatterLoom` | `["maintainer", "first-contributor"]` |
+| `PreCommitFormatterRustLoom` | `["maintainer", "first-contributor"]` |
+| `ContributingMdLoom` | `["maintainer", "first-contributor"]` |
+| `EofNewlineLoom` | `["maintainer", "first-contributor"]` |
+| `SilentFailureGrepperLoom` | `["maintainer", "auditor", "driver"]` |
+| `LiteratureDriftDetectorLoom` | `["maintainer", "auditor", "driver"]` |
+
+The v1 declarations leave `adopter`, `sub-agent`, and `integrator` with
+zero loom support. This is the load-bearing surface working as designed:
+the absent classes identify the first-priority candidates for the next
+round of new looms.
+
+#### `spa-ai doctor` extension
+
+- Each per-loom JSON entry now includes `weaver_classes_served`.
+- New top-level `weaver_class_coverage` block aggregates across the
+  registry: `served` (canonical class -> loom count, sorted by count
+  desc then name asc), `absent` (canonical classes with zero loom
+  support, in canonical declaration order), `unknown_loom_count`
+  (registered looms with empty declaration), `unknown_classes_declared`
+  (non-canonical strings any loom declared, sorted unique).
+- Human formatter prints a one-line `serves:` annotation under each
+  WOULD FIRE entry plus a `Weaver-class coverage` block at the end of
+  the doctor report.
+- **Schema bump 1 → 2.** All v1 fields remain present and unchanged;
+  the new fields are additive. Existing v1 consumers that ignore
+  unknown fields per JSON-spec convention continue to work. The bump
+  is the honest signal of the new shape.
+
+### Tests
+
+- 190 tests passing (was 152 in 0.5.0; +38 new across the new module
+  + Protocol-extension regression guards + doctor coverage assertions).
+- `tests/test_weaver_classes.py` — 13 tests covering canonical set
+  guard, alias resolution, case-insensitivity, open string-set
+  pass-through, whitespace handling, non-string defensive return,
+  `is_known_weaver_class` recognition + alias resolution + rejection
+  of unknown, and an `ALIASES` no-dangling-target guard.
+- `tests/test_loom_dignity_frame.py` — 25 tests covering the Protocol
+  shape on every shipped loom, per-loom expected declarations,
+  `_build_weaver_class_coverage` aggregation + alias normalization +
+  unknown-loom counting + unknown-class advisory + sort-order
+  determinism, doctor JSON + human surface integration, schema_v2
+  guard, registry-size invariant, and backward-compat for an external
+  loom predating the slot.
+- `tests/test_doctor.py` — updated for `schema_version == 2` + the
+  per-loom `weaver_classes_served` field requirement.
+
+### Documentation
+
+- `docs/loom_authoring_guide.md` — new "Weaver-class declaration"
+  subsection (~80 lines): canonical 7-class table, alias examples,
+  open-string-set discipline, doctor-rendering example. Top-of-file
+  contracts list bumped from "Three contracts" to "Four contracts."
+- `docs/looms_in_production.md` — per-row `Weaver classes served`
+  annotation added to each existing entry (Loom #1 MRA-1, Loom #2
+  SISE-1, Loom #3 LiteratureDriftDetector, Loom #4 candidate).
+
+### Behavior change vs 0.5.0
+
+- `spa-ai doctor` JSON output reports `schema_version: 2` and includes
+  the new `weaver_class_coverage` block. Telemetry aggregation and
+  scan output are unchanged.
+- The CLI `propose --loom <id>` UX is unchanged. No new looms ship in
+  this release; all 6 v0.5 looms remain in the registry.
+
+### 0.6.0 release 3-slot vision
+
+- `sakichi=92` (which loom was absent — the framework couldn't say WHO
+  any loom served, so couldn't say which weaver-classes were unserved
+  by the roster)
+- `method=[77, 18, 99]` (genchi-genbutsu reads the actual per-loom
+  rationale at the docstring level / 5-Whys to the absent slot /
+  write-it-down via the Protocol attribute + doctor surface)
+- `stance=[22, 96, 100]` (loom-serves-weaver — the slot serves loom
+  authors who want to name their audience / V96 maintainers-as-edge-
+  developers — a slot whose default surfaces the gap rather than
+  hiding it / V100 equal-dignity — every weaver class becomes
+  schema-visible, none privileged by enum, none excluded by closure)
+
+---
+
 ## [0.5.0]
 
 Loom catalog grows 5 → 6. The Sakichi 100 visions now have a citation-layer

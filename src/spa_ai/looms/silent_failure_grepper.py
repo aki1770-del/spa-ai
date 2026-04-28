@@ -263,6 +263,10 @@ class SilentFailureGrepperLoom:
     sakichi_vision_id = 14
     method_vision_ids = [77, 18, 99]
     stance_vision_ids = [22, 25, 32, 100]
+    # Maintainer reviews the audit; auditor consumes provenance of swallowed
+    # errors; driver downstream of an app built on this code does not absorb
+    # silent absence-of-data masquerading as success.
+    weaver_classes_served = ["maintainer", "auditor", "driver"]
 
     # Cached scan results so detect() and propose_patch() see the same set.
     # Stateful by design (per Komada (a) override + this loom needs to scan

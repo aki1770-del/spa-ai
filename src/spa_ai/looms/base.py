@@ -21,6 +21,19 @@ Every loom must:
    All three slots ground in `docs/sakichi_100_visions.md` and are
    required by commitments.md Commitment 5 for full lineage traceability.
 
+   In addition, a fourth slot names WHO the loom serves (FACT-data,
+   distinct from the three vision slots which are stance/method/failure-
+   mode declarations):
+
+   - `weaver_classes_served` (list[str]) — the weaver-classes this loom
+     directly serves (e.g., `["maintainer", "first-contributor"]`). See
+     `weaver_classes.py` for the canonical v1 set and alias map. Defaults
+     to `[]` for backward-compat — a loom predating this slot continues
+     to register, and the doctor surface reports any such loom in an
+     advisory "unknown" bucket so the gap is visible without breaking
+     the registry contract. Open-string-set: declarations not in the
+     canonical set surface as advisory, not as registration errors.
+
 2. Implement `detect()` — walk the repo, return a list of LoomFinding.
 3. Implement `propose_patch()` — given a finding, return a LoomPatch
    (file contents + PR body).
@@ -85,6 +98,7 @@ class Loom(Protocol):
     sakichi_vision_id: int
     method_vision_ids: list[int]
     stance_vision_ids: list[int]
+    weaver_classes_served: list[str]
 
     def detect(self, repo_root: Path) -> list[LoomFinding]:
         """Walk `repo_root` and return findings. Must not write to disk."""

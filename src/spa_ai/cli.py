@@ -37,6 +37,11 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from .looms.base import LoomFinding
+from .looms.weaver_classes import (
+    KNOWN_WEAVER_CLASSES,
+    is_known_weaver_class,
+    normalize_weaver_class,
+)
 from .registry import default_registry
 from .scanner import RepoScanner
 from .telemetry import write_report
@@ -127,10 +132,74 @@ def _classify_loom_status(
     return ("clean", "no findings; applicability heuristic not defined for this loom")
 
 
+def _build_weaver_class_coverage(looms_report: list[dict]) -> dict:
+    """Compute the weaver-class coverage block from the per-loom entries.
+
+    Reports:
+      - `served`: dict of canonical-class -> loom-count (only canonical
+        classes appear here; aggregation is normalized via
+        `normalize_weaver_class`).
+      - `absent`: list of canonical classes with zero loom support
+        (sorted; deterministic for snapshot tests).
+      - `unknown_loom_count`: number of registered looms whose
+        `weaver_classes_served` is empty (the framework cannot say WHO
+        such a loom serves; the doctor surfaces this as advisory rather
+        than refusing registration).
+      - `unknown_classes_declared`: list of non-canonical class strings
+        any loom declared (sorted unique). These pass through the open
+        string-set; the surface here gives the maintainer a way to spot
+        fragmentation early and consider canonicalization.
+    """
+    served: dict[str, int] = {}
+    unknown_loom_count = 0
+    unknown_classes: set[str] = set()
+
+    for entry in looms_report:
+        declared = entry.get("weaver_classes_served", [])
+        if not declared:
+            unknown_loom_count += 1
+            continue
+        for raw in declared:
+            canonical = normalize_weaver_class(raw)
+            if not canonical:
+                continue
+            if is_known_weaver_class(canonical):
+                served[canonical] = served.get(canonical, 0) + 1
+            else:
+                unknown_classes.add(canonical)
+
+    absent = [c for c in KNOWN_WEAVER_CLASSES if c not in served]
+
+    # Deterministic ordering: served sorted by count desc then name asc; absent
+    # follows the canonical declaration order (already deterministic via
+    # `KNOWN_WEAVER_CLASSES` tuple); unknown classes sorted alphabetically.
+    served_sorted = dict(
+        sorted(served.items(), key=lambda kv: (-kv[1], kv[0]))
+    )
+
+    return {
+        "served": served_sorted,
+        "absent": absent,
+        "unknown_loom_count": unknown_loom_count,
+        "unknown_classes_declared": sorted(unknown_classes),
+    }
+
+
 def _build_doctor_report(repo: Path) -> dict:
     """Build the doctor report dict (pure function — no I/O side effects).
 
     Returns the structured report used for both human and JSON output.
+
+    Schema_version 2 (this PR) extends v1 with two additions:
+      1. each per-loom entry includes a `weaver_classes_served` field
+         (the loom's own declaration; `[]` for any loom predating the slot);
+      2. a top-level `weaver_class_coverage` block aggregates declarations
+         across the registry — which canonical classes are served, by how
+         many looms, which canonical classes are absent, and any unknown
+         classes the open string-set surfaced.
+
+    All v1 fields remain present and unchanged. Existing v1 consumers that
+    ignore unknown JSON fields per spec convention continue to work.
     """
     registry = default_registry()
     scanner = RepoScanner(registry)
@@ -144,12 +213,16 @@ def _build_doctor_report(repo: Path) -> dict:
     for loom in registry.all():
         loom_findings = findings_by_loom.get(loom.loom_id, [])
         status, reason = _classify_loom_status(loom.loom_id, repo, loom_findings)
+        # `weaver_classes_served` defaults to [] for backward-compat with any
+        # external loom predating the Protocol extension.
+        declared = list(getattr(loom, "weaver_classes_served", []) or [])
         entry = {
             "loom_id": loom.loom_id,
             "sakichi_vision_id": loom.sakichi_vision_id,
             "status": status,
             "finding_count": len(loom_findings),
             "reason": reason,
+            "weaver_classes_served": declared,
         }
         if loom_findings:
             f = loom_findings[0]
@@ -169,12 +242,13 @@ def _build_doctor_report(repo: Path) -> dict:
     }
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "command": "doctor",
         "spa_ai_version": _spa_ai_version(),
         "repo": str(repo),
         "looms": looms_report,
         "summary": summary,
+        "weaver_class_coverage": _build_weaver_class_coverage(looms_report),
     }
 
 
@@ -207,6 +281,9 @@ def _print_doctor_human(report: dict) -> None:
             sf = L.get("sample_finding", {})
             print(f"      sample: {sf.get('target_path', '?')} — {sf.get('reason', '')}")
             print(f"      install: {L['install_command']}")
+            served = L.get("weaver_classes_served") or []
+            if served:
+                print(f"      serves: {', '.join(served)}")
         print()
 
     if clean:
@@ -228,6 +305,45 @@ def _print_doctor_human(report: dict) -> None:
         ):
             print(f"  {i}. {L['install_command']}")
         print()
+
+    coverage = report.get("weaver_class_coverage")
+    if coverage:
+        _print_weaver_class_coverage(coverage, report["summary"]["total_looms"])
+
+
+def _print_weaver_class_coverage(coverage: dict, total_looms: int) -> None:
+    """Render the weaver-class coverage block for human eyes.
+
+    Surfaces (1) which canonical classes are served + by how many looms,
+    (2) which canonical classes are absent from the roster, (3) any
+    looms that declared no weaver_classes_served (advisory bucket), and
+    (4) any non-canonical classes the open string-set surfaced.
+    """
+    served = coverage.get("served", {})
+    absent = coverage.get("absent", [])
+    unknown_loom_count = coverage.get("unknown_loom_count", 0)
+    unknown_classes = coverage.get("unknown_classes_declared", [])
+
+    print(f"Weaver-class coverage ({total_looms} loom(s)):")
+    if served:
+        served_str = ", ".join(
+            f"{cls} ({count}/{total_looms})" for cls, count in served.items()
+        )
+        print(f"  served:   {served_str}")
+    else:
+        print("  served:   (none — no loom declared a known weaver class)")
+    if absent:
+        absent_str = ", ".join(f"{cls} (0/{total_looms})" for cls in absent)
+        print(f"  absent:   {absent_str}")
+    print(
+        f"  unknown:  {unknown_loom_count} loom(s) declared no weaver_classes_served"
+    )
+    if unknown_classes:
+        print(
+            "  advisory: non-canonical classes declared: "
+            f"{', '.join(unknown_classes)} — consider canonicalizing"
+        )
+    print()
 
 
 def _cmd_scan(args: argparse.Namespace) -> int:
