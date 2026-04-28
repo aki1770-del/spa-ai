@@ -6,7 +6,50 @@ All notable changes to SPA AI will be documented here.
 
 ### Added
 
-#### Optional `--driver-profile` field on `scan` + `doctor` (this PR)
+#### `spa-ai telemetry aggregate` — local-only aggregation report (this PR)
+
+- New subcommand: `spa-ai telemetry aggregate [--driver-profile <label>] [--format=human|json]`.
+  Reads the local JSONL the harness wrote (`~/.spa-ai/usage_reports.jsonl`
+  by default, or `$SPA_AI_USAGE_REPORT_PATH`) and reports per-axis
+  counts: by `driver_profile`, by `loom_id`, by `sakichi_vision_id`.
+- `--driver-profile <label>` filters per-loom and per-vision counts to
+  records matching the label. The per-profile axis stays full so the
+  filter's effect is visible. Records that lack the field bucket under
+  `(unset)`.
+- **No network call.** Aggregation reads only the local JSONL the user
+  opted into writing. Promise 4 (local-only in v0.4) preserved; the
+  user can `cat` the file at any time.
+- Robust to a partially-malformed file: lines that aren't valid JSON
+  or that lack `findings` are counted in `skipped_line_count` and
+  otherwise ignored — never raises.
+- New module `src/spa_ai/telemetry_aggregate.py`. Pure-function
+  `aggregate(report_path=None, driver_profile_filter=None)` returns
+  an `AggregateResult` dataclass; CLI layer formats it.
+- JSON output follows the established `schema_version: 1` precedent
+  (PR #17). Stable fields: `report_path`, `record_count`,
+  `skipped_line_count`, `by_driver_profile`, `by_loom_id`,
+  `by_sakichi_vision_id` (each axis ordered by count descending then
+  key ascending).
+- Tests: `tests/test_telemetry_aggregate.py` — 14 tests covering
+  missing file, empty file, per-axis grouping, missing-profile bucket,
+  filter behavior, malformed-line skipping, count ordering, and the
+  CLI surface in both human and JSON modes.
+
+#### `spa-ai telemetry aggregate` 3-slot vision
+
+- `sakichi=99` (write-the-decision-down — the report IS the local
+  decision record of which looms fired where, by which user-population
+  class, in what shape)
+- `method=[77, 99]` (genchi-genbutsu reads the actual local file /
+  write-it-down structured for the maintainer)
+- `stance=[22, 96, 100]` (loom-serves-weaver — surfaces her own data
+  for her own calibration / V96 maintainers-as-edge-developers /
+  equal-dignity — same opt-in substrate her downstream tools would
+  expect)
+
+---
+
+#### Optional `--driver-profile` field on `scan` + `doctor` (prior PR #18)
 
 - Adds `--driver-profile <label>` CLI flag to both `scan` and `doctor`.
   The label is a free-form string (e.g., `ageing-rural`,

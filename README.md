@@ -58,6 +58,19 @@ proposes; the human commits and opens the PR):
 spa-ai propose /path/to/some/repo --loom pre-commit-formatter --apply
 ```
 
+If you have opted into the local telemetry harness (`spa-ai scan
+--report-anonymous-usage`), aggregate the local log to see your own
+patterns:
+
+```bash
+spa-ai telemetry aggregate
+spa-ai telemetry aggregate --driver-profile ageing-rural --format=json
+```
+
+Counts records by `driver_profile`, `loom_id`, and `sakichi_vision_id`.
+Reads only `~/.spa-ai/usage_reports.jsonl` (or
+`$SPA_AI_USAGE_REPORT_PATH`); no network call.
+
 There is intentionally no `spa-ai alert` or `spa-ai issue-open`
 subcommand. Per `docs/promises.md` Promise 3, the loom is a pull
 request, not an alert; if we cannot offer a PR, we do not speak.
